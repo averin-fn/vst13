@@ -12,3 +12,6 @@ npm-debug.log*
 # ОС
 .DS_Store
 Thumbs.db
+
+# Локальные настройки Claude Code (обновляются автоматически)
+.claude/settings.local.json
