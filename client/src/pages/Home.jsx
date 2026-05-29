@@ -1,0 +1,62 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import InviteModal from '../components/InviteModal.jsx';
+
+export default function Home() {
+  const [inviteOpen, setInviteOpen] = useState(false);
+
+  return (
+    <div className="home">
+      <section className="hero">
+        <h1 className="hero-title">О команде</h1>
+        <p className="hero-motto">«Незаметно. Слаженно. До конца.»</p>
+        <p className="hero-text">
+          Мы — страйкбольная команда, объединённая тактикой, дисциплиной и любовью к
+          игре. Проводим тренировки, участвуем в крупных полигонных сценариях и всегда
+          рады новым бойцам.
+        </p>
+        <div className="hero-actions">
+          <Link to="/participants" className="btn btn-primary">
+            Состав команды
+          </Link>
+          <Link to="/events" className="btn btn-ghost">
+            Ближайшие игры
+          </Link>
+        </div>
+      </section>
+
+      <section className="features">
+        <div className="feature">
+          <h3>Тактика</h3>
+          <p>Работа в группах, отлаженная связь и продуманные действия на полигоне.</p>
+        </div>
+        <div className="feature">
+          <h3>Снаряжение</h3>
+          <p>Помогаем новичкам с экипировкой и подбором первого привода.</p>
+        </div>
+        <div className="feature">
+          <h3>Команда</h3>
+          <p>Дружный коллектив, регулярные тренировки и совместные выезды.</p>
+        </div>
+      </section>
+
+      <section className="cta-block">
+        <h2>Хочешь в команду?</h2>
+        <p>Напиши нам через форму обратной связи — расскажем, как присоединиться.</p>
+        <Link to="/feedback" className="btn btn-primary">
+          Связаться с нами
+        </Link>
+      </section>
+
+      <section className="cta-block">
+        <h2>Пригласить на игру</h2>
+        <p>Сформируйте приглашение: позывной, дислокация, дата и время и ссылка.</p>
+        <button type="button" className="btn btn-primary" onClick={() => setInviteOpen(true)}>
+          Пригласить
+        </button>
+      </section>
+
+      <InviteModal open={inviteOpen} onClose={() => setInviteOpen(false)} />
+    </div>
+  );
+}

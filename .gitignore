@@ -1,0 +1,14 @@
+# Зависимости
+node_modules/
+
+# Логи
+*.log
+npm-debug.log*
+
+# SQLite runtime (журналы WAL)
+*.db-wal
+*.db-shm
+
+# ОС
+.DS_Store
+Thumbs.db
