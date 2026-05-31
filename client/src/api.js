@@ -120,9 +120,14 @@ export const api = {
   },
 
   // чат
-  getChat: (since = 0) => request(`/member/chat?since=${since}`, { memberAuth: true }),
-  sendChatMessage: (message) =>
-    request('/member/chat', { method: 'POST', memberAuth: true, body: JSON.stringify({ message }) }),
+  getChat: (channel = 'general', since = 0) =>
+    request(`/member/chat?channel=${encodeURIComponent(channel)}&since=${since}`, { memberAuth: true }),
+  sendChatMessage: (channel, message) =>
+    request('/member/chat', {
+      method: 'POST',
+      memberAuth: true,
+      body: JSON.stringify({ channel, message })
+    }),
 
   // RSVP
   getMyRsvps: () => request('/member/rsvps', { memberAuth: true }),

@@ -54,6 +54,16 @@ export default function ParticipantDetail() {
           <h3 className="detail-section-title">Досье</h3>
           <p className="detail-bio">{participant.bio || 'Информация пока не заполнена.'}</p>
         </div>
+
+        <div className="detail-photo">
+          {participant.photo ? (
+            <img src={participant.photo} alt={participant.name} />
+          ) : (
+            <span className="participant-photo-placeholder">
+              {participant.callsign?.[0] || '?'}
+            </span>
+          )}
+        </div>
       </div>
     </div>
   );

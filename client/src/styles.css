@@ -454,9 +454,26 @@ a {
 
 .detail {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
+  grid-template-columns: 1.1fr 1fr 0.8fr;
+  gap: 24px;
   margin-top: 18px;
+}
+
+.detail-photo {
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  background: radial-gradient(circle at 50% 35%, #2d331f, #181b10);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.detail-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .detail-name {
@@ -908,6 +925,13 @@ a {
     flex-direction: column;
     align-items: flex-start;
   }
+  .chat-layout {
+    grid-template-columns: 1fr;
+  }
+  .chat-channels {
+    flex-direction: row;
+    overflow-x: auto;
+  }
 }
 
 /* ---------- Военный стиль надписей (militia) ---------- */
@@ -1046,6 +1070,49 @@ a {
 }
 
 /* ---------- Чат ---------- */
+.chat-layout {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.chat-channels {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px;
+}
+
+.chat-channel {
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 9px 12px;
+  border-radius: 8px;
+  color: var(--text-dim);
+  font: inherit;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.chat-channel:hover {
+  background: var(--bg-input);
+  color: var(--text);
+}
+.chat-channel.active {
+  background: rgba(170, 184, 134, 0.18);
+  color: var(--accent-2);
+}
+
+.chat-main {
+  min-width: 0;
+}
+
 .chat {
   background: var(--bg-card);
   border: 1px solid var(--border);

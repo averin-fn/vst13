@@ -75,18 +75,25 @@ router.post('/password', requireMember, (req, res) => {
 });
 
 /* ---------- Общий чат ---------- */
+const ALLOWED_CHANNELS = ['general', 'tactics', 'gear', 'games'];
+
+function normalizeChannel(value) {
+  const ch = String(value || 'general').toLowerCase();
+  return ALLOWED_CHANNELS.includes(ch) ? ch : 'general';
+}
+
 router.get('/chat', requireMember, (req, res) => {
-  // Берём последние 200 сообщений и возвращаем в порядке возрастания.
+  const channel = normalizeChannel(req.query.channel);
   const rows = db
     .prepare(
-      `SELECT m.id, m.message, m.created_at, m.participant_id, p.callsign, p.name
+      `SELECT m.id, m.channel, m.message, m.created_at, m.participant_id, p.callsign, p.name
        FROM chat_messages m
        JOIN participants p ON p.id = m.participant_id
-       WHERE m.id > ?
+       WHERE m.channel = ? AND m.id > ?
        ORDER BY m.id ASC
        LIMIT 200`
     )
-    .all(Number(req.query.since || 0));
+    .all(channel, Number(req.query.since || 0));
   res.json(rows);
 });
 
@@ -94,9 +101,10 @@ router.post('/chat', requireMember, (req, res) => {
   const message = String(req.body.message || '').trim();
   if (!message) return res.status(400).json({ error: 'Пустое сообщение' });
   if (message.length > 1000) return res.status(400).json({ error: 'Слишком длинное сообщение' });
+  const channel = normalizeChannel(req.body.channel);
   const info = db
-    .prepare('INSERT INTO chat_messages (participant_id, message, created_at) VALUES (?, ?, ?)')
-    .run(req.member.participantId, message, new Date().toISOString());
+    .prepare('INSERT INTO chat_messages (participant_id, channel, message, created_at) VALUES (?, ?, ?, ?)')
+    .run(req.member.participantId, channel, message, new Date().toISOString());
   res.status(201).json({ id: Number(info.lastInsertRowid) });
 });
 

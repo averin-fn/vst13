@@ -50,6 +50,7 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS chat_messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     participant_id INTEGER NOT NULL,
+    channel TEXT NOT NULL DEFAULT 'general',
     message TEXT NOT NULL,
     created_at TEXT NOT NULL,
     FOREIGN KEY (participant_id) REFERENCES participants(id) ON DELETE CASCADE
@@ -76,6 +77,9 @@ db.exec(
   `CREATE UNIQUE INDEX IF NOT EXISTS idx_participants_username
    ON participants(username) WHERE username IS NOT NULL AND username <> ''`
 );
+
+// Миграция: добавляем колонку channel в чат, по умолчанию 'general'
+try { db.exec("ALTER TABLE chat_messages ADD COLUMN channel TEXT NOT NULL DEFAULT 'general'"); } catch { /* колонка уже есть */ }
 
 // Дефолтный администратор при первом запуске.
 // Логин/пароль можно задать через переменные окружения ADMIN_USER / ADMIN_PASSWORD.
