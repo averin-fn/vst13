@@ -117,5 +117,28 @@ export const api = {
     const fd = new FormData();
     fd.append('file', file);
     return request('/member/upload', { method: 'POST', memberAuth: true, body: fd });
-  }
+  },
+
+  // чат
+  getChat: (since = 0) => request(`/member/chat?since=${since}`, { memberAuth: true }),
+  sendChatMessage: (message) =>
+    request('/member/chat', { method: 'POST', memberAuth: true, body: JSON.stringify({ message }) }),
+
+  // RSVP
+  getMyRsvps: () => request('/member/rsvps', { memberAuth: true }),
+  setMyRsvp: (eventId, status) =>
+    request(`/member/rsvps/${eventId}`, { method: 'PUT', memberAuth: true, body: JSON.stringify({ status }) }),
+  clearMyRsvp: (eventId) =>
+    request(`/member/rsvps/${eventId}`, { method: 'DELETE', memberAuth: true }),
+
+  // смена пароля
+  changeMyPassword: (currentPassword, newPassword) =>
+    request('/member/password', {
+      method: 'POST',
+      memberAuth: true,
+      body: JSON.stringify({ currentPassword, newPassword })
+    }),
+
+  // админ: RSVP по мероприятию
+  getEventRsvps: (id) => request(`/admin/events/${id}/rsvps`, { auth: true })
 };

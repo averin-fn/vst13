@@ -1,34 +1,24 @@
 import { useEffect, useState } from 'react';
-import { Navigate, useNavigate, Link } from 'react-router-dom';
+import { Outlet, NavLink, Navigate, useNavigate, Link } from 'react-router-dom';
 import { api, isMemberAuthed, clearMemberToken } from '../../api';
-import FileField from '../../components/admin/FileField.jsx';
+
+const links = [
+  { to: '/cabinet/profile', label: 'Профиль' },
+  { to: '/cabinet/events', label: 'Мероприятия' },
+  { to: '/cabinet/chat', label: 'Чат' },
+  { to: '/cabinet/password', label: 'Безопасность' }
+];
 
 export default function Cabinet() {
   const navigate = useNavigate();
   const [me, setMe] = useState(null);
-  const [form, setForm] = useState({ bio: '', photo: '', model_url: '' });
-  const [status, setStatus] = useState('loading');
-  const [busy, setBusy] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!isMemberAuthed()) return;
     api
       .getMe()
-      .then((data) => {
-        setMe(data);
-        setForm({
-          bio: data.bio || '',
-          photo: data.photo || '',
-          model_url: data.model_url || ''
-        });
-        setStatus('ready');
-      })
-      .catch((err) => {
-        setError(err.message);
-        setStatus('error');
-      });
+      .then(setMe)
+      .catch(() => clearMemberToken());
   }, []);
 
   if (!isMemberAuthed()) {
@@ -38,30 +28,6 @@ export default function Cabinet() {
   const logout = () => {
     clearMemberToken();
     navigate('/cabinet/login', { replace: true });
-  };
-
-  const update = (field) => (e) => {
-    setForm({ ...form, [field]: e.target.value });
-    setSaved(false);
-  };
-  const setField = (field) => (value) => {
-    setForm((f) => ({ ...f, [field]: value }));
-    setSaved(false);
-  };
-
-  const save = async (e) => {
-    e.preventDefault();
-    setBusy(true);
-    setError('');
-    setSaved(false);
-    try {
-      await api.updateMe(form);
-      setSaved(true);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setBusy(false);
-    }
   };
 
   return (
@@ -78,6 +44,17 @@ export default function Cabinet() {
             <div className="cabinet-me-name">{me.name}</div>
           </div>
         )}
+        <nav className="sidebar-nav">
+          {links.map((l) => (
+            <NavLink
+              key={l.to}
+              to={l.to}
+              className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+            >
+              {l.label}
+            </NavLink>
+          ))}
+        </nav>
         <div className="sidebar-bottom">
           <Link to="/" className="nav-link">↩ На сайт</Link>
           <button className="nav-link nav-link-btn" onClick={logout}>
@@ -85,77 +62,9 @@ export default function Cabinet() {
           </button>
         </div>
       </aside>
-
       <div className="main-area">
         <main className="content">
-          <div className="admin-page">
-            <h1 className="page-title">Профиль</h1>
-            <p className="page-subtitle">
-              Здесь можно отредактировать досье, фото и 3D-модель снаряжения. Позывной,
-              имя, роль и дату вступления меняет администратор.
-            </p>
-
-            {status === 'loading' && <p className="notice">Загрузка…</p>}
-            {status === 'error' && <p className="notice notice-error">{error || 'Не удалось загрузить профиль.'}</p>}
-
-            {status === 'ready' && me && (
-              <form className="card admin-form" onSubmit={save}>
-                <div className="form-grid">
-                  <div className="field">
-                    <span>Позывной</span>
-                    <div className="readonly-value">«{me.callsign}»</div>
-                  </div>
-                  <div className="field">
-                    <span>Имя</span>
-                    <div className="readonly-value">{me.name}</div>
-                  </div>
-                  <div className="field">
-                    <span>Роль</span>
-                    <div className="readonly-value">{me.role}</div>
-                  </div>
-                  <div className="field">
-                    <span>В команде с</span>
-                    <div className="readonly-value">{me.joined_date || '—'}</div>
-                  </div>
-                </div>
-
-                <label className="field">
-                  <span>Досье / биография</span>
-                  <textarea rows={4} value={form.bio} onChange={update('bio')} />
-                </label>
-
-                <div className="form-grid">
-                  <FileField
-                    label="Фото"
-                    value={form.photo}
-                    onChange={setField('photo')}
-                    accept="image/*"
-                    uploadFn={api.memberUpload}
-                  />
-                  <FileField
-                    label="3D-модель (.glb / .gltf)"
-                    value={form.model_url}
-                    onChange={setField('model_url')}
-                    accept=".glb,.gltf,model/gltf-binary"
-                    uploadFn={api.memberUpload}
-                    hint="Если не задана — показывается стандартная модель бойца."
-                  />
-                </div>
-
-                {error && <p className="notice notice-error">{error}</p>}
-                {saved && <p className="notice notice-success">Сохранено.</p>}
-
-                <div className="form-actions">
-                  <button type="submit" className="btn btn-primary" disabled={busy}>
-                    {busy ? 'Сохранение…' : 'Сохранить'}
-                  </button>
-                  <Link to={`/participants/${me.id}`} className="btn btn-ghost">
-                    Смотреть мою карточку
-                  </Link>
-                </div>
-              </form>
-            )}
-          </div>
+          <Outlet context={{ me, refreshMe: () => api.getMe().then(setMe).catch(() => {}) }} />
         </main>
       </div>
     </div>

@@ -46,6 +46,24 @@ db.exec(`
     key TEXT PRIMARY KEY,
     value TEXT NOT NULL DEFAULT ''
   );
+
+  CREATE TABLE IF NOT EXISTS chat_messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    participant_id INTEGER NOT NULL,
+    message TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (participant_id) REFERENCES participants(id) ON DELETE CASCADE
+  );
+
+  CREATE TABLE IF NOT EXISTS event_rsvps (
+    event_id INTEGER NOT NULL,
+    participant_id INTEGER NOT NULL,
+    status TEXT NOT NULL DEFAULT 'yes',
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (event_id, participant_id),
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
+    FOREIGN KEY (participant_id) REFERENCES participants(id) ON DELETE CASCADE
+  );
 `);
 
 // Значения настроек по умолчанию

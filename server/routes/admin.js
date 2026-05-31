@@ -175,6 +175,20 @@ router.delete('/events/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+// Кто отметился по конкретному мероприятию (для админа)
+router.get('/events/:id/rsvps', (req, res) => {
+  const rows = db
+    .prepare(
+      `SELECT p.id, p.name, p.callsign, p.role, r.status, r.updated_at
+       FROM event_rsvps r
+       JOIN participants p ON p.id = r.participant_id
+       WHERE r.event_id = ?
+       ORDER BY CASE r.status WHEN 'yes' THEN 0 WHEN 'maybe' THEN 1 ELSE 2 END, p.callsign`
+    )
+    .all(req.params.id);
+  res.json(rows);
+});
+
 /* ---------------- Обратная связь ---------------- */
 router.get('/feedback', (req, res) => {
   const rows = db.prepare('SELECT * FROM feedback ORDER BY datetime(created_at) DESC').all();

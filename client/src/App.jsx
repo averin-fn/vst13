@@ -13,6 +13,10 @@ import FeedbackAdmin from './pages/admin/FeedbackAdmin.jsx';
 import SettingsAdmin from './pages/admin/SettingsAdmin.jsx';
 import CabinetLogin from './pages/cabinet/Login.jsx';
 import Cabinet from './pages/cabinet/Cabinet.jsx';
+import CabinetProfile from './pages/cabinet/Profile.jsx';
+import CabinetEvents from './pages/cabinet/Events.jsx';
+import CabinetChat from './pages/cabinet/Chat.jsx';
+import CabinetPassword from './pages/cabinet/Password.jsx';
 
 export default function App() {
   return (
@@ -27,7 +31,13 @@ export default function App() {
       </Route>
 
       <Route path="/cabinet/login" element={<CabinetLogin />} />
-      <Route path="/cabinet" element={<Cabinet />} />
+      <Route path="/cabinet" element={<Cabinet />}>
+        <Route index element={<Navigate to="/cabinet/profile" replace />} />
+        <Route path="profile" element={<CabinetProfile />} />
+        <Route path="events" element={<CabinetEvents />} />
+        <Route path="chat" element={<CabinetChat />} />
+        <Route path="password" element={<CabinetPassword />} />
+      </Route>
 
       <Route path="/admin/login" element={<Login />} />
       <Route path="/admin" element={<AdminLayout />}>
