@@ -1,17 +1,18 @@
-const path = require('path');
-const fs = require('fs');
 const express = require('express');
-const multer = require('multer');
+const bcrypt = require('bcryptjs');
 const db = require('../db');
 const { requireAuth } = require('../middleware/auth');
+const upload = require('../middleware/upload');
 
 const router = express.Router();
 
-// Все маршруты ниже требуют авторизации
+// Все маршруты ниже требуют авторизации администратора
 router.use(requireAuth);
 
 /* ---------------- Участники ---------------- */
 const PARTICIPANT_FIELDS = ['name', 'callsign', 'role', 'bio', 'photo', 'model_url', 'joined_date'];
+const PARTICIPANT_ADMIN_COLS =
+  'id, name, callsign, role, bio, photo, model_url, joined_date, username';
 
 function pick(body, fields) {
   const out = {};
@@ -19,30 +20,125 @@ function pick(body, fields) {
   return out;
 }
 
+// Подготовить значения username/password_hash из тела запроса.
+// На POST: либо оба пустые (без аккаунта), либо оба заполнены.
+// На PUT: username опционально (если строка передана — устанавливаем, '' = убрать аккаунт),
+//         password опционально (если непустой — обновляем хэш).
+function deriveAuthFields(body, mode) {
+  const username = body.username != null ? String(body.username).trim() : undefined;
+  const password = body.password != null ? String(body.password) : '';
+
+  if (mode === 'create') {
+    if (!username && !password) return { username: null, password_hash: '' };
+    if (!username || !password) {
+      const err = new Error('Для аккаунта укажите и логин, и пароль');
+      err.status = 400;
+      throw err;
+    }
+    return { username, password_hash: bcrypt.hashSync(password, 10) };
+  }
+  // mode === 'update'
+  const out = {};
+  if (username !== undefined) {
+    // Пустая строка — убрать аккаунт (заодно очистим пароль)
+    out.username = username === '' ? null : username;
+    if (username === '') out.password_hash = '';
+  }
+  if (password) {
+    out.password_hash = bcrypt.hashSync(password, 10);
+  }
+  return out;
+}
+
+router.get('/participants/:id', (req, res) => {
+  const row = db
+    .prepare(`SELECT ${PARTICIPANT_ADMIN_COLS} FROM participants WHERE id = ?`)
+    .get(req.params.id);
+  if (!row) return res.status(404).json({ error: 'Участник не найден' });
+  res.json(row);
+});
+
 router.post('/participants', (req, res) => {
   const data = pick(req.body, PARTICIPANT_FIELDS);
   if (!data.name || !data.callsign || !data.role) {
     return res.status(400).json({ error: 'Заполните имя, позывной и роль' });
   }
-  const info = db
-    .prepare(
-      `INSERT INTO participants (name, callsign, role, bio, photo, model_url, joined_date)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
-    )
-    .run(data.name, data.callsign, data.role, data.bio, data.photo, data.model_url, data.joined_date);
-  res.status(201).json({ id: Number(info.lastInsertRowid) });
+  let auth;
+  try {
+    auth = deriveAuthFields(req.body, 'create');
+  } catch (err) {
+    return res.status(err.status || 400).json({ error: err.message });
+  }
+  try {
+    const info = db
+      .prepare(
+        `INSERT INTO participants (name, callsign, role, bio, photo, model_url, joined_date, username, password_hash)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      )
+      .run(
+        data.name,
+        data.callsign,
+        data.role,
+        data.bio,
+        data.photo,
+        data.model_url,
+        data.joined_date,
+        auth.username,
+        auth.password_hash
+      );
+    res.status(201).json({ id: Number(info.lastInsertRowid) });
+  } catch (err) {
+    if (/UNIQUE/i.test(err.message)) {
+      return res.status(409).json({ error: 'Такой логин уже занят' });
+    }
+    throw err;
+  }
 });
 
 router.put('/participants/:id', (req, res) => {
   const data = pick(req.body, PARTICIPANT_FIELDS);
+  let auth;
+  try {
+    auth = deriveAuthFields(req.body, 'update');
+  } catch (err) {
+    return res.status(err.status || 400).json({ error: err.message });
+  }
+  // Сначала обновляем основные поля
   const info = db
     .prepare(
       `UPDATE participants
        SET name = ?, callsign = ?, role = ?, bio = ?, photo = ?, model_url = ?, joined_date = ?
        WHERE id = ?`
     )
-    .run(data.name, data.callsign, data.role, data.bio, data.photo, data.model_url, data.joined_date, req.params.id);
+    .run(
+      data.name,
+      data.callsign,
+      data.role,
+      data.bio,
+      data.photo,
+      data.model_url,
+      data.joined_date,
+      req.params.id
+    );
   if (info.changes === 0) return res.status(404).json({ error: 'Участник не найден' });
+
+  // Затем — поля аккаунта, если они в запросе
+  try {
+    if ('username' in auth) {
+      db.prepare('UPDATE participants SET username = ? WHERE id = ?').run(auth.username, req.params.id);
+    }
+    if ('password_hash' in auth) {
+      db.prepare('UPDATE participants SET password_hash = ? WHERE id = ?').run(
+        auth.password_hash,
+        req.params.id
+      );
+    }
+  } catch (err) {
+    if (/UNIQUE/i.test(err.message)) {
+      return res.status(409).json({ error: 'Такой логин уже занят' });
+    }
+    throw err;
+  }
   res.json({ ok: true });
 });
 
@@ -106,30 +202,6 @@ router.put('/settings', (req, res) => {
 });
 
 /* ---------------- Загрузка файлов ---------------- */
-const uploadsDir = path.join(__dirname, '..', 'uploads');
-if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-
-const ALLOWED_EXT = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.glb', '.gltf'];
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    const unique = `${Date.now()}-${Math.round(Math.random() * 1e9)}${ext}`;
-    cb(null, unique);
-  }
-});
-
-const upload = multer({
-  storage,
-  limits: { fileSize: 25 * 1024 * 1024 },
-  fileFilter: (req, file, cb) => {
-    const ext = path.extname(file.originalname).toLowerCase();
-    if (ALLOWED_EXT.includes(ext)) return cb(null, true);
-    cb(new Error('Недопустимый тип файла'));
-  }
-});
-
 router.post('/upload', (req, res) => {
   upload.single('file')(req, res, (err) => {
     if (err) return res.status(400).json({ error: err.message });

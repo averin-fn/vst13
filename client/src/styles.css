@@ -961,6 +961,46 @@ a {
   letter-spacing: 6px;
 }
 
+/* ---------- Cabinet ---------- */
+.readonly-value {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 14px;
+  color: var(--text);
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+}
+
+.cabinet-me {
+  padding: 10px 14px 14px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.cabinet-me-callsign {
+  color: var(--accent-2);
+  font-weight: 700;
+  font-size: 0.9rem;
+}
+.cabinet-me-name {
+  color: var(--text);
+  font-size: 0.95rem;
+}
+
+.login-hint {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+.link {
+  color: var(--accent-2);
+  text-decoration: underline;
+}
+.link:hover {
+  color: var(--text);
+}
+
 /* Отступ между смежными CTA-блоками */
 .cta-block + .cta-block {
   margin-top: 18px;

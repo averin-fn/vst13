@@ -4,7 +4,8 @@ const links = [
   { to: '/', label: 'Основной', end: true },
   { to: '/participants', label: 'Участники' },
   { to: '/events', label: 'Мероприятия' },
-  { to: '/feedback', label: 'Обратная связь' }
+  { to: '/feedback', label: 'Обратная связь' },
+  { to: '/cabinet', label: 'Личный кабинет' }
 ];
 
 export default function Navbar() {

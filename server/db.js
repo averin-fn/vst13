@@ -14,7 +14,9 @@ db.exec(`
     bio TEXT NOT NULL DEFAULT '',
     photo TEXT NOT NULL DEFAULT '',
     model_url TEXT NOT NULL DEFAULT '',
-    joined_date TEXT NOT NULL DEFAULT ''
+    joined_date TEXT NOT NULL DEFAULT '',
+    username TEXT,
+    password_hash TEXT NOT NULL DEFAULT ''
   );
 
   CREATE TABLE IF NOT EXISTS events (
@@ -48,6 +50,14 @@ db.exec(`
 
 // Значения настроек по умолчанию
 db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('header_image', '');
+
+// Миграция: добавляем колонки для аккаунтов участников в старых БД
+try { db.exec('ALTER TABLE participants ADD COLUMN username TEXT'); } catch { /* колонка уже есть */ }
+try { db.exec("ALTER TABLE participants ADD COLUMN password_hash TEXT NOT NULL DEFAULT ''"); } catch { /* колонка уже есть */ }
+db.exec(
+  `CREATE UNIQUE INDEX IF NOT EXISTS idx_participants_username
+   ON participants(username) WHERE username IS NOT NULL AND username <> ''`
+);
 
 // Дефолтный администратор при первом запуске.
 // Логин/пароль можно задать через переменные окружения ADMIN_USER / ADMIN_PASSWORD.

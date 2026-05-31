@@ -9,13 +9,16 @@ const EMPTY = {
   bio: '',
   photo: '',
   model_url: '',
-  joined_date: ''
+  joined_date: '',
+  username: '',
+  password: ''
 };
 
 export default function ParticipantsAdmin() {
   const [list, setList] = useState([]);
   const [form, setForm] = useState(EMPTY);
   const [editingId, setEditingId] = useState(null);
+  const [hadAccount, setHadAccount] = useState(false);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
@@ -30,22 +33,31 @@ export default function ParticipantsAdmin() {
   const startCreate = () => {
     setForm(EMPTY);
     setEditingId(null);
+    setHadAccount(false);
     setError('');
   };
 
-  const startEdit = (p) => {
-    setForm({
-      name: p.name,
-      callsign: p.callsign,
-      role: p.role,
-      bio: p.bio,
-      photo: p.photo,
-      model_url: p.model_url,
-      joined_date: p.joined_date
-    });
-    setEditingId(p.id);
+  const startEdit = async (p) => {
     setError('');
+    setEditingId(p.id);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    try {
+      const full = await api.getAdminParticipant(p.id);
+      setForm({
+        name: full.name,
+        callsign: full.callsign,
+        role: full.role,
+        bio: full.bio,
+        photo: full.photo,
+        model_url: full.model_url,
+        joined_date: full.joined_date,
+        username: full.username || '',
+        password: ''
+      });
+      setHadAccount(!!full.username);
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   const save = async (e) => {
@@ -53,8 +65,20 @@ export default function ParticipantsAdmin() {
     setBusy(true);
     setError('');
     try {
-      if (editingId) await api.updateParticipant(editingId, form);
-      else await api.createParticipant(form);
+      // На обновление: отправляем username всегда (чтобы можно было убрать),
+      // password — только если ввели новый.
+      const payload = { ...form };
+      if (!payload.password) delete payload.password;
+      if (editingId) {
+        await api.updateParticipant(editingId, payload);
+      } else {
+        // На создание: если username/password пустые — не отправляем эти поля.
+        if (!payload.username) {
+          delete payload.username;
+          delete payload.password;
+        }
+        await api.createParticipant(payload);
+      }
       await load();
       startCreate();
     } catch (err) {
@@ -121,6 +145,38 @@ export default function ParticipantsAdmin() {
             accept=".glb,.gltf,model/gltf-binary"
             hint="Если не задана — показывается стандартная модель бойца."
           />
+        </div>
+
+        <h3 className="admin-form-title">Аккаунт личного кабинета</h3>
+        <div className="form-grid">
+          <label className="field">
+            <span>Логин</span>
+            <input
+              value={form.username}
+              onChange={update('username')}
+              placeholder="напр. grom"
+              autoComplete="off"
+            />
+            <span className="file-hint">
+              {editingId
+                ? 'Очистите поле, чтобы убрать аккаунт у участника.'
+                : 'Оставьте пустым, если аккаунт пока не нужен.'}
+            </span>
+          </label>
+          <label className="field">
+            <span>{editingId && hadAccount ? 'Новый пароль' : 'Пароль'}</span>
+            <input
+              type="password"
+              value={form.password}
+              onChange={update('password')}
+              autoComplete="new-password"
+            />
+            <span className="file-hint">
+              {editingId && hadAccount
+                ? 'Оставьте пустым, чтобы не менять текущий пароль.'
+                : 'Минимум 4 символа.'}
+            </span>
+          </label>
         </div>
 
         {error && <p className="notice notice-error">{error}</p>}

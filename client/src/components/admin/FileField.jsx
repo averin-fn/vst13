@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { api } from '../../api';
 
-export default function FileField({ label, value, onChange, accept, hint }) {
+export default function FileField({ label, value, onChange, accept, hint, uploadFn }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -11,7 +11,8 @@ export default function FileField({ label, value, onChange, accept, hint }) {
     setBusy(true);
     setError('');
     try {
-      const { url } = await api.upload(file);
+      const fn = uploadFn || api.upload;
+      const { url } = await fn(file);
       onChange(url);
     } catch (err) {
       setError(err.message);

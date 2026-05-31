@@ -1,5 +1,6 @@
 const BASE = '/api';
 const TOKEN_KEY = 'vst13_token';
+const MEMBER_TOKEN_KEY = 'vst13_member_token';
 
 export function getToken() {
   return localStorage.getItem(TOKEN_KEY);
@@ -14,8 +15,21 @@ export function isAuthed() {
   return !!getToken();
 }
 
+export function getMemberToken() {
+  return localStorage.getItem(MEMBER_TOKEN_KEY);
+}
+export function setMemberToken(token) {
+  localStorage.setItem(MEMBER_TOKEN_KEY, token);
+}
+export function clearMemberToken() {
+  localStorage.removeItem(MEMBER_TOKEN_KEY);
+}
+export function isMemberAuthed() {
+  return !!getMemberToken();
+}
+
 async function request(path, options = {}) {
-  const { auth, body, headers, ...rest } = options;
+  const { auth, memberAuth, body, headers, ...rest } = options;
   const finalHeaders = { ...(headers || {}) };
 
   // FormData отправляем как есть (браузер сам выставит Content-Type с boundary)
@@ -24,11 +38,17 @@ async function request(path, options = {}) {
   if (auth) {
     const token = getToken();
     if (token) finalHeaders['Authorization'] = `Bearer ${token}`;
+  } else if (memberAuth) {
+    const token = getMemberToken();
+    if (token) finalHeaders['Authorization'] = `Bearer ${token}`;
   }
 
   const res = await fetch(BASE + path, { ...rest, headers: finalHeaders, body });
 
-  if (res.status === 401 && auth) clearToken();
+  if (res.status === 401) {
+    if (auth) clearToken();
+    if (memberAuth) clearMemberToken();
+  }
 
   if (!res.ok) {
     let message = 'Ошибка запроса';
@@ -52,11 +72,12 @@ export const api = {
   getSettings: () => request('/settings'),
   sendFeedback: (payload) => request('/feedback', { method: 'POST', body: JSON.stringify(payload) }),
 
-  // ---- авторизация ----
+  // ---- авторизация (админ) ----
   login: (username, password) =>
     request('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
 
   // ---- админ: участники ----
+  getAdminParticipant: (id) => request(`/admin/participants/${id}`, { auth: true }),
   createParticipant: (data) =>
     request('/admin/participants', { method: 'POST', auth: true, body: JSON.stringify(data) }),
   updateParticipant: (id, data) =>
@@ -79,10 +100,22 @@ export const api = {
   updateSettings: (data) =>
     request('/admin/settings', { method: 'PUT', auth: true, body: JSON.stringify(data) }),
 
-  // ---- загрузка файлов ----
+  // ---- админ: загрузка файлов ----
   upload: (file) => {
     const fd = new FormData();
     fd.append('file', file);
     return request('/admin/upload', { method: 'POST', auth: true, body: fd });
+  },
+
+  // ---- личный кабинет участника ----
+  memberLogin: (username, password) =>
+    request('/member/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
+  getMe: () => request('/member/me', { memberAuth: true }),
+  updateMe: (data) =>
+    request('/member/me', { method: 'PUT', memberAuth: true, body: JSON.stringify(data) }),
+  memberUpload: (file) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return request('/member/upload', { method: 'POST', memberAuth: true, body: fd });
   }
 };

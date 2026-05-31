@@ -11,6 +11,8 @@ import ParticipantsAdmin from './pages/admin/ParticipantsAdmin.jsx';
 import EventsAdmin from './pages/admin/EventsAdmin.jsx';
 import FeedbackAdmin from './pages/admin/FeedbackAdmin.jsx';
 import SettingsAdmin from './pages/admin/SettingsAdmin.jsx';
+import CabinetLogin from './pages/cabinet/Login.jsx';
+import Cabinet from './pages/cabinet/Cabinet.jsx';
 
 export default function App() {
   return (
@@ -23,6 +25,9 @@ export default function App() {
         <Route path="/feedback" element={<Feedback />} />
         <Route path="*" element={<p className="notice">Страница не найдена</p>} />
       </Route>
+
+      <Route path="/cabinet/login" element={<CabinetLogin />} />
+      <Route path="/cabinet" element={<Cabinet />} />
 
       <Route path="/admin/login" element={<Login />} />
       <Route path="/admin" element={<AdminLayout />}>

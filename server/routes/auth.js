@@ -1,7 +1,7 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const db = require('../db');
-const { sign } = require('../middleware/auth');
+const { signAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -14,7 +14,7 @@ router.post('/login', (req, res) => {
     return res.status(401).json({ error: 'Неверный логин или пароль' });
   }
 
-  const token = sign({ id: admin.id, username: admin.username });
+  const token = signAdmin({ id: admin.id, username: admin.username });
   res.json({ token, username: admin.username });
 });
 
