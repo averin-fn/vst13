@@ -9,6 +9,10 @@ npm-debug.log*
 *.db-wal
 *.db-shm
 
+# Загружаемый пользователями контент (runtime), кроме .gitkeep
+server/uploads/*
+!server/uploads/.gitkeep
+
 # ОС
 .DS_Store
 Thumbs.db
