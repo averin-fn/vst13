@@ -4,6 +4,7 @@ const links = [
   { to: '/', label: 'Основной', end: true },
   { to: '/participants', label: 'Участники' },
   { to: '/events', label: 'Мероприятия' },
+  { to: '/calendar', label: 'Календарь' },
   { to: '/feedback', label: 'Обратная связь' },
   { to: '/cabinet', label: 'Личный кабинет' }
 ];

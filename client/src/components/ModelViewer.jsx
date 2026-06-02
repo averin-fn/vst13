@@ -1,6 +1,9 @@
-import { Suspense } from 'react';
+import { Suspense, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, useGLTF, Html } from '@react-three/drei';
+import * as THREE from 'three';
+
+const GROUND_Y = -1;
 
 // Заглушка: процедурная фигура бойца из примитивов.
 // Когда у участника появится поле model_url с .glb-файлом,
@@ -10,8 +13,10 @@ function PlaceholderSoldier() {
   const darkGear = '#3a4127'; // тёмный оливковый
   const skin = '#c6a279';
 
+  // Нижняя точка ног (капсулы r=0.16, центр y=0.35, длина 0.85) ≈ -0.235.
+  // Сдвигаем группу так, чтобы ступни стояли на уровне GROUND_Y.
   return (
-    <group position={[0, -1, 0]}>
+    <group position={[0, GROUND_Y + 0.235, 0]}>
       {/* Голова */}
       <mesh position={[0, 1.95, 0]} castShadow>
         <sphereGeometry args={[0.26, 32, 32]} />
@@ -67,7 +72,17 @@ function PlaceholderSoldier() {
 
 function GLBModel({ url }) {
   const { scene } = useGLTF(url);
-  return <primitive object={scene} position={[0, -1, 0]} />;
+  // Авто-выравнивание: сдвигаем модель так, чтобы её нижняя точка стояла на сетке.
+  // Клонируем, чтобы не модифицировать общий ресурс useGLTF (кэшируется по url).
+  const positioned = useMemo(() => {
+    const copy = scene.clone(true);
+    const box = new THREE.Box3().setFromObject(copy);
+    if (Number.isFinite(box.min.y)) {
+      copy.position.y += GROUND_Y - box.min.y;
+    }
+    return copy;
+  }, [scene]);
+  return <primitive object={positioned} />;
 }
 
 function Loader() {
