@@ -10,11 +10,14 @@ npm-debug.log*
 *.db-shm
 
 # Загружаемый контент в server/uploads:
-# картинки игнорируем (runtime), 3D-модели храним в репозитории (через Git LFS)
+# картинки храним в репозитории, 3D-модели игнорируем (runtime)
 server/uploads/*
 !server/uploads/.gitkeep
-!server/uploads/*.glb
-!server/uploads/*.gltf
+!server/uploads/*.jpg
+!server/uploads/*.jpeg
+!server/uploads/*.png
+!server/uploads/*.webp
+!server/uploads/*.gif
 
 # ОС
 .DS_Store
