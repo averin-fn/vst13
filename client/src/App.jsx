@@ -30,7 +30,7 @@ export default function App() {
         <Route path="/participants/:id" element={<ParticipantDetail />} />
         <Route path="/events" element={<Navigate to="/calendar" replace />} />
         <Route path="/calendar" element={<Calendar />} />
-        <Route path="/rules" element={<Rules />} />
+        <Route path="/rules" element={<Navigate to="/cabinet/rules" replace />} />
         <Route path="/feedback" element={<Feedback />} />
         <Route path="*" element={<p className="notice">Страница не найдена</p>} />
       </Route>
@@ -43,6 +43,7 @@ export default function App() {
         <Route path="chat" element={<CabinetChat />} />
         <Route path="password" element={<CabinetPassword />} />
         <Route path="events-manage" element={<CabinetEventsManage />} />
+        <Route path="rules" element={<Rules />} />
       </Route>
 
       <Route path="/admin/login" element={<Login />} />

@@ -6,6 +6,7 @@ const links = [
   { to: '/cabinet/profile', label: 'Профиль' },
   { to: '/cabinet/events', label: 'Мероприятия' },
   { to: '/cabinet/chat', label: 'Чат' },
+  { to: '/cabinet/rules', label: 'Правила' },
   { to: '/cabinet/password', label: 'Безопасность' }
 ];
 

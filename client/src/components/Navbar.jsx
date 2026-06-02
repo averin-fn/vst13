@@ -4,8 +4,7 @@ import { isMemberAuthed } from '../api';
 const memberLinks = [
   { to: '/', label: 'Основной', end: true },
   { to: '/participants', label: 'Участники' },
-  { to: '/calendar', label: 'Календарь' },
-  { to: '/rules', label: 'Правила' }
+  { to: '/calendar', label: 'Календарь' }
 ];
 const guestLinks = [
   { to: '/', label: 'Основной', end: true },
