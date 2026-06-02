@@ -12,13 +12,22 @@ const links = [
 export default function Cabinet() {
   const navigate = useNavigate();
   const [me, setMe] = useState(null);
+  const [unread, setUnread] = useState(0);
+
+  const refreshMe = () => api.getMe().then(setMe).catch(() => {});
+  const refreshUnread = () =>
+    api
+      .getUnreadChat()
+      .then((d) => setUnread(d.unread || 0))
+      .catch(() => {});
 
   useEffect(() => {
     if (!isMemberAuthed()) return;
-    api
-      .getMe()
-      .then(setMe)
-      .catch(() => clearMemberToken());
+    refreshMe();
+    refreshUnread();
+    const t = setInterval(refreshUnread, 15000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   if (!isMemberAuthed()) {
@@ -51,10 +60,13 @@ export default function Cabinet() {
               to={l.to}
               className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
             >
-              {l.label}
+              <span>{l.label}</span>
+              {l.to === '/cabinet/chat' && unread > 0 && (
+                <span className="nav-badge">{unread > 99 ? '99+' : unread}</span>
+              )}
             </NavLink>
           ))}
-          {me?.can_manage_events && (
+          {!!me?.can_manage_events && (
             <NavLink
               to="/cabinet/events-manage"
               className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
@@ -72,7 +84,7 @@ export default function Cabinet() {
       </aside>
       <div className="main-area">
         <main className="content">
-          <Outlet context={{ me, refreshMe: () => api.getMe().then(setMe).catch(() => {}) }} />
+          <Outlet context={{ me, refreshMe, refreshUnread }} />
         </main>
       </div>
     </div>

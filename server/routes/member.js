@@ -108,6 +108,37 @@ router.post('/chat', requireMember, (req, res) => {
   res.status(201).json({ id: Number(info.lastInsertRowid) });
 });
 
+// Сколько непрочитанных сообщений у участника
+// (свои сообщения не считаем; учитываем все каналы)
+router.get('/chat/unread', requireMember, (req, res) => {
+  const row = db
+    .prepare(
+      `SELECT COUNT(*) AS count
+       FROM chat_messages m
+       WHERE m.participant_id <> ?
+         AND m.id > COALESCE(
+           (SELECT r.last_read_id FROM chat_reads r
+            WHERE r.participant_id = ? AND r.channel = m.channel),
+           0)`
+    )
+    .get(req.member.participantId, req.member.participantId);
+  res.json({ unread: row.count });
+});
+
+// Пометить канал прочитанным до lastId
+router.post('/chat/mark-read', requireMember, (req, res) => {
+  const channel = normalizeChannel(req.body.channel);
+  const lastId = Number(req.body.lastId) || 0;
+  db.prepare(
+    `INSERT INTO chat_reads (participant_id, channel, last_read_id, updated_at)
+     VALUES (?, ?, ?, ?)
+     ON CONFLICT(participant_id, channel) DO UPDATE SET
+       last_read_id = MAX(last_read_id, excluded.last_read_id),
+       updated_at = excluded.updated_at`
+  ).run(req.member.participantId, channel, lastId, new Date().toISOString());
+  res.json({ ok: true });
+});
+
 /* ---------- RSVP на мероприятия ---------- */
 router.get('/rsvps', requireMember, (req, res) => {
   const rows = db
@@ -122,7 +153,7 @@ router.get('/rsvps', requireMember, (req, res) => {
   res.json(rows);
 });
 
-const RSVP_STATUSES = ['yes', 'no', 'maybe'];
+const RSVP_STATUSES = ['yes', 'no'];
 
 router.put('/rsvps/:eventId', requireMember, (req, res) => {
   const status = String(req.body.status || '').toLowerCase();
@@ -179,6 +210,12 @@ router.delete('/events/:id', requireMember, ensureEventManager, (req, res) => {
   const info = db.prepare('DELETE FROM events WHERE id = ?').run(req.params.id);
   if (info.changes === 0) return res.status(404).json({ error: 'Мероприятие не найдено' });
   res.json({ ok: true });
+});
+
+/* ---------- Правила (только для участников) ---------- */
+router.get('/rules', requireMember, (req, res) => {
+  const rows = db.prepare('SELECT slug, title, content FROM rules').all();
+  res.json(rows);
 });
 
 module.exports = router;

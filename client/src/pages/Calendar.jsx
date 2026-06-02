@@ -212,7 +212,6 @@ export default function Calendar() {
         {selectedEvents.map((e) => {
           const list = votes[e.id] || [];
           const yes = list.filter((v) => v.status === 'yes');
-          const maybe = list.filter((v) => v.status === 'maybe');
           const no = list.filter((v) => v.status === 'no');
           return (
             <article key={e.id} className="card event-card cal-event">
@@ -247,7 +246,6 @@ export default function Calendar() {
                 {memberAuthed && (
                   <div className="vote-stats">
                     <VoteGroup label="Поеду" status="yes" people={yes} />
-                    {maybe.length > 0 && <VoteGroup label="Под вопросом" status="maybe" people={maybe} />}
                     <VoteGroup label="Не поеду" status="no" people={no} />
                     {list.length === 0 && (
                       <p className="vote-empty">Голосов пока нет.</p>

@@ -66,7 +66,31 @@ db.exec(`
     FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
     FOREIGN KEY (participant_id) REFERENCES participants(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS rules (
+    slug TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL DEFAULT ''
+  );
+
+  CREATE TABLE IF NOT EXISTS chat_reads (
+    participant_id INTEGER NOT NULL,
+    channel TEXT NOT NULL DEFAULT 'general',
+    last_read_id INTEGER NOT NULL DEFAULT 0,
+    updated_at TEXT NOT NULL,
+    PRIMARY KEY (participant_id, channel),
+    FOREIGN KEY (participant_id) REFERENCES participants(id) ON DELETE CASCADE
+  );
 `);
+
+// Сид трёх разделов правил (без перезаписи, если уже что-то записано)
+const rulesSeed = [
+  ['general', 'Основные правила', 'Здесь будут общие правила страйкбола: техника безопасности, поведение на полигоне, скорости приводов и т.д.\n\nКонтент редактируется в админ-панели.'],
+  ['team', 'Правила команды', 'Внутренние правила команды ВСТ13: дисциплина, иерархия, взаимодействие на полигоне, ответственность.\n\nКонтент редактируется в админ-панели.'],
+  ['equipment', 'Экипировка', 'Требования к экипировке: обязательная (защита глаз, маркеры/повязки, аптечка), рекомендованная (тактическое снаряжение, форма, обувь).\n\nКонтент редактируется в админ-панели.']
+];
+const rulesInsert = db.prepare('INSERT OR IGNORE INTO rules (slug, title, content) VALUES (?, ?, ?)');
+for (const row of rulesSeed) rulesInsert.run(...row);
 
 // Значения настроек по умолчанию
 db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)').run('header_image', '');

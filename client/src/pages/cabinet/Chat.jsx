@@ -17,7 +17,7 @@ function formatTime(value) {
 }
 
 export default function CabinetChat() {
-  const { me } = useOutletContext();
+  const { me, refreshUnread } = useOutletContext();
   const [channel, setChannel] = useState('general');
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
@@ -63,6 +63,16 @@ export default function CabinetChat() {
     const el = scrollRef.current;
     if (el) el.scrollTop = el.scrollHeight;
   }, [messages]);
+
+  // Помечаем канал прочитанным до последнего видимого сообщения
+  useEffect(() => {
+    if (messages.length === 0) return;
+    const lastId = messages[messages.length - 1].id;
+    api
+      .markChatRead(channel, lastId)
+      .then(() => refreshUnread && refreshUnread())
+      .catch(() => {});
+  }, [messages, channel, refreshUnread]);
 
   const send = async (e) => {
     e.preventDefault();

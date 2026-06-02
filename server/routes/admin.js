@@ -224,6 +224,19 @@ router.put('/settings', (req, res) => {
   res.json({ ok: true });
 });
 
+/* ---------------- Правила ---------------- */
+router.get('/rules', (req, res) => {
+  const rows = db.prepare('SELECT slug, title, content FROM rules').all();
+  res.json(rows);
+});
+
+router.put('/rules/:slug', (req, res) => {
+  const content = String(req.body.content ?? '');
+  const info = db.prepare('UPDATE rules SET content = ? WHERE slug = ?').run(content, req.params.slug);
+  if (info.changes === 0) return res.status(404).json({ error: 'Раздел правил не найден' });
+  res.json({ ok: true });
+});
+
 /* ---------------- Загрузка файлов ---------------- */
 router.post('/upload', (req, res) => {
   upload.single('file')(req, res, (err) => {

@@ -5,12 +5,14 @@ import Participants from './pages/Participants.jsx';
 import ParticipantDetail from './pages/ParticipantDetail.jsx';
 import Feedback from './pages/Feedback.jsx';
 import Calendar from './pages/Calendar.jsx';
+import Rules from './pages/Rules.jsx';
 import Login from './pages/admin/Login.jsx';
 import AdminLayout from './pages/admin/AdminLayout.jsx';
 import ParticipantsAdmin from './pages/admin/ParticipantsAdmin.jsx';
 import EventsAdmin from './pages/admin/EventsAdmin.jsx';
 import FeedbackAdmin from './pages/admin/FeedbackAdmin.jsx';
 import SettingsAdmin from './pages/admin/SettingsAdmin.jsx';
+import RulesAdmin from './pages/admin/RulesAdmin.jsx';
 import CabinetLogin from './pages/cabinet/Login.jsx';
 import Cabinet from './pages/cabinet/Cabinet.jsx';
 import CabinetProfile from './pages/cabinet/Profile.jsx';
@@ -28,6 +30,7 @@ export default function App() {
         <Route path="/participants/:id" element={<ParticipantDetail />} />
         <Route path="/events" element={<Navigate to="/calendar" replace />} />
         <Route path="/calendar" element={<Calendar />} />
+        <Route path="/rules" element={<Rules />} />
         <Route path="/feedback" element={<Feedback />} />
         <Route path="*" element={<p className="notice">Страница не найдена</p>} />
       </Route>
@@ -49,6 +52,7 @@ export default function App() {
         <Route path="events" element={<EventsAdmin />} />
         <Route path="feedback" element={<FeedbackAdmin />} />
         <Route path="settings" element={<SettingsAdmin />} />
+        <Route path="rules" element={<RulesAdmin />} />
       </Route>
     </Routes>
   );

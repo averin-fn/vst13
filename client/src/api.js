@@ -128,6 +128,14 @@ export const api = {
   memberDeleteEvent: (id) =>
     request(`/member/events/${id}`, { method: 'DELETE', memberAuth: true }),
 
+  // правила (только для участников)
+  getRules: () => request('/member/rules', { memberAuth: true }),
+
+  // админ: редактирование правил
+  getAdminRules: () => request('/admin/rules', { auth: true }),
+  updateRule: (slug, content) =>
+    request(`/admin/rules/${slug}`, { method: 'PUT', auth: true, body: JSON.stringify({ content }) }),
+
   // чат
   getChat: (channel = 'general', since = 0) =>
     request(`/member/chat?channel=${encodeURIComponent(channel)}&since=${since}`, { memberAuth: true }),
@@ -136,6 +144,13 @@ export const api = {
       method: 'POST',
       memberAuth: true,
       body: JSON.stringify({ channel, message })
+    }),
+  getUnreadChat: () => request('/member/chat/unread', { memberAuth: true }),
+  markChatRead: (channel, lastId) =>
+    request('/member/chat/mark-read', {
+      method: 'POST',
+      memberAuth: true,
+      body: JSON.stringify({ channel, lastId })
     }),
 
   // RSVP
