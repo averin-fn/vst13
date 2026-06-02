@@ -9,9 +9,12 @@ npm-debug.log*
 *.db-wal
 *.db-shm
 
-# Загружаемый пользователями контент (runtime), кроме .gitkeep
+# Загружаемый контент в server/uploads:
+# картинки игнорируем (runtime), 3D-модели храним в репозитории (через Git LFS)
 server/uploads/*
 !server/uploads/.gitkeep
+!server/uploads/*.glb
+!server/uploads/*.gltf
 
 # ОС
 .DS_Store
