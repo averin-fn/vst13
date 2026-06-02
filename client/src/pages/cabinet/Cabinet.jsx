@@ -54,6 +54,14 @@ export default function Cabinet() {
               {l.label}
             </NavLink>
           ))}
+          {me?.can_manage_events && (
+            <NavLink
+              to="/cabinet/events-manage"
+              className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+            >
+              Управление играми
+            </NavLink>
+          )}
         </nav>
         <div className="sidebar-bottom">
           <Link to="/" className="nav-link">↩ На сайт</Link>

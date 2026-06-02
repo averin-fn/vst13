@@ -1,5 +1,6 @@
 const express = require('express');
 const db = require('../db');
+const { requireMember } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -8,8 +9,8 @@ router.get('/', (req, res) => {
   res.json(rows);
 });
 
-// Публичная статистика голосования по мероприятию
-router.get('/:id/rsvps', (req, res) => {
+// Статистика голосования — только для зарегистрированных участников
+router.get('/:id/rsvps', requireMember, (req, res) => {
   const rows = db
     .prepare(
       `SELECT p.id, p.callsign, p.name, r.status

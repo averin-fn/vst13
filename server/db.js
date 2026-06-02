@@ -16,7 +16,8 @@ db.exec(`
     model_url TEXT NOT NULL DEFAULT '',
     joined_date TEXT NOT NULL DEFAULT '',
     username TEXT,
-    password_hash TEXT NOT NULL DEFAULT ''
+    password_hash TEXT NOT NULL DEFAULT '',
+    can_manage_events INTEGER NOT NULL DEFAULT 0
   );
 
   CREATE TABLE IF NOT EXISTS events (
@@ -80,6 +81,9 @@ db.exec(
 
 // Миграция: добавляем колонку channel в чат, по умолчанию 'general'
 try { db.exec("ALTER TABLE chat_messages ADD COLUMN channel TEXT NOT NULL DEFAULT 'general'"); } catch { /* колонка уже есть */ }
+
+// Миграция: право участника управлять мероприятиями (0/1)
+try { db.exec('ALTER TABLE participants ADD COLUMN can_manage_events INTEGER NOT NULL DEFAULT 0'); } catch { /* колонка уже есть */ }
 
 // Дефолтный администратор при первом запуске.
 // Логин/пароль можно задать через переменные окружения ADMIN_USER / ADMIN_PASSWORD.

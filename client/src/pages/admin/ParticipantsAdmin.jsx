@@ -11,7 +11,8 @@ const EMPTY = {
   model_url: '',
   joined_date: '',
   username: '',
-  password: ''
+  password: '',
+  can_manage_events: false
 };
 
 export default function ParticipantsAdmin() {
@@ -52,7 +53,8 @@ export default function ParticipantsAdmin() {
         model_url: full.model_url,
         joined_date: full.joined_date,
         username: full.username || '',
-        password: ''
+        password: '',
+        can_manage_events: !!full.can_manage_events
       });
       setHadAccount(!!full.username);
     } catch (err) {
@@ -146,6 +148,16 @@ export default function ParticipantsAdmin() {
             hint="Если не задана — показывается стандартная модель бойца."
           />
         </div>
+
+        <h3 className="admin-form-title">Права</h3>
+        <label className="check-row">
+          <input
+            type="checkbox"
+            checked={form.can_manage_events}
+            onChange={(e) => setForm({ ...form, can_manage_events: e.target.checked })}
+          />
+          <span>Может редактировать календарь и мероприятия</span>
+        </label>
 
         <h3 className="admin-form-title">Аккаунт личного кабинета</h3>
         <div className="form-grid">

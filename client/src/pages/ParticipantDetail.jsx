@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { api } from '../api';
+import { api, isMemberAuthed } from '../api';
 import ModelViewer from '../components/ModelViewer.jsx';
 
 export default function ParticipantDetail() {
@@ -30,6 +30,8 @@ export default function ParticipantDetail() {
       </div>
     );
   }
+
+  const fromCabinet = isMemberAuthed();
 
   return (
     <div className="page">
@@ -65,6 +67,14 @@ export default function ParticipantDetail() {
           )}
         </div>
       </div>
+
+      {fromCabinet && (
+        <div className="detail-actions">
+          <Link to="/cabinet/profile" className="btn btn-ghost">
+            ← В профиль
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

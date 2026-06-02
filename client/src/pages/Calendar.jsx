@@ -109,10 +109,12 @@ export default function Calendar() {
   const selectedEvents = eventsByDate.get(selected) || [];
 
   // При смене выбранной даты — подгружаем статистику голосов для каждого события
+  // (только для залогиненных участников — гостям статистика не показывается)
   useEffect(() => {
+    if (!memberAuthed) return;
     selectedEvents.forEach((e) => loadVotes(e.id));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selected, events.length]);
+  }, [selected, events.length, memberAuthed]);
 
   const shiftMonth = (delta) => {
     setView((v) => {
@@ -242,14 +244,16 @@ export default function Calendar() {
                   </p>
                 )}
 
-                <div className="vote-stats">
-                  <VoteGroup label="Поеду" status="yes" people={yes} />
-                  {maybe.length > 0 && <VoteGroup label="Под вопросом" status="maybe" people={maybe} />}
-                  <VoteGroup label="Не поеду" status="no" people={no} />
-                  {list.length === 0 && (
-                    <p className="vote-empty">Голосов пока нет.</p>
-                  )}
-                </div>
+                {memberAuthed && (
+                  <div className="vote-stats">
+                    <VoteGroup label="Поеду" status="yes" people={yes} />
+                    {maybe.length > 0 && <VoteGroup label="Под вопросом" status="maybe" people={maybe} />}
+                    <VoteGroup label="Не поеду" status="no" people={no} />
+                    {list.length === 0 && (
+                      <p className="vote-empty">Голосов пока нет.</p>
+                    )}
+                  </div>
+                )}
               </div>
             </article>
           );

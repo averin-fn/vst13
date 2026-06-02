@@ -1,12 +1,12 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const db = require('../db');
-const { signMember, requireMember } = require('../middleware/auth');
+const { signMember, requireMember, ensureEventManager } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
 const router = express.Router();
 
-const ME_COLS = 'id, name, callsign, role, bio, photo, model_url, joined_date, username';
+const ME_COLS = 'id, name, callsign, role, bio, photo, model_url, joined_date, username, can_manage_events';
 
 /* ---------- Авторизация ---------- */
 router.post('/login', (req, res) => {
@@ -145,6 +145,39 @@ router.delete('/rsvps/:eventId', requireMember, (req, res) => {
     req.params.eventId,
     req.member.participantId
   );
+  res.json({ ok: true });
+});
+
+/* ---------- Управление мероприятиями (только для назначенных админом) ---------- */
+const EVENT_FIELDS = ['title', 'date', 'location', 'description', 'image'];
+
+function pickEvent(body) {
+  const out = {};
+  for (const f of EVENT_FIELDS) out[f] = body[f] != null ? String(body[f]) : '';
+  return out;
+}
+
+router.post('/events', requireMember, ensureEventManager, (req, res) => {
+  const data = pickEvent(req.body);
+  if (!data.title) return res.status(400).json({ error: 'Укажите название мероприятия' });
+  const info = db
+    .prepare('INSERT INTO events (title, date, location, description, image) VALUES (?, ?, ?, ?, ?)')
+    .run(data.title, data.date, data.location, data.description, data.image);
+  res.status(201).json({ id: Number(info.lastInsertRowid) });
+});
+
+router.put('/events/:id', requireMember, ensureEventManager, (req, res) => {
+  const data = pickEvent(req.body);
+  const info = db
+    .prepare('UPDATE events SET title = ?, date = ?, location = ?, description = ?, image = ? WHERE id = ?')
+    .run(data.title, data.date, data.location, data.description, data.image, req.params.id);
+  if (info.changes === 0) return res.status(404).json({ error: 'Мероприятие не найдено' });
+  res.json({ ok: true });
+});
+
+router.delete('/events/:id', requireMember, ensureEventManager, (req, res) => {
+  const info = db.prepare('DELETE FROM events WHERE id = ?').run(req.params.id);
+  if (info.changes === 0) return res.status(404).json({ error: 'Мероприятие не найдено' });
   res.json({ ok: true });
 });
 

@@ -17,6 +17,7 @@ import CabinetProfile from './pages/cabinet/Profile.jsx';
 import CabinetEvents from './pages/cabinet/Events.jsx';
 import CabinetChat from './pages/cabinet/Chat.jsx';
 import CabinetPassword from './pages/cabinet/Password.jsx';
+import CabinetEventsManage from './pages/cabinet/EventsManage.jsx';
 
 export default function App() {
   return (
@@ -38,6 +39,7 @@ export default function App() {
         <Route path="events" element={<CabinetEvents />} />
         <Route path="chat" element={<CabinetChat />} />
         <Route path="password" element={<CabinetPassword />} />
+        <Route path="events-manage" element={<CabinetEventsManage />} />
       </Route>
 
       <Route path="/admin/login" element={<Login />} />

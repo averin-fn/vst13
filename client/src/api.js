@@ -69,7 +69,7 @@ export const api = {
   getParticipants: () => request('/participants'),
   getParticipant: (id) => request(`/participants/${id}`),
   getEvents: () => request('/events'),
-  getEventVotes: (id) => request(`/events/${id}/rsvps`),
+  getEventVotes: (id) => request(`/events/${id}/rsvps`, { memberAuth: true }),
   getSettings: () => request('/settings'),
   sendFeedback: (payload) => request('/feedback', { method: 'POST', body: JSON.stringify(payload) }),
 
@@ -119,6 +119,14 @@ export const api = {
     fd.append('file', file);
     return request('/member/upload', { method: 'POST', memberAuth: true, body: fd });
   },
+
+  // управление мероприятиями (для участников с правом)
+  memberCreateEvent: (data) =>
+    request('/member/events', { method: 'POST', memberAuth: true, body: JSON.stringify(data) }),
+  memberUpdateEvent: (id, data) =>
+    request(`/member/events/${id}`, { method: 'PUT', memberAuth: true, body: JSON.stringify(data) }),
+  memberDeleteEvent: (id) =>
+    request(`/member/events/${id}`, { method: 'DELETE', memberAuth: true }),
 
   // чат
   getChat: (channel = 'general', since = 0) =>

@@ -443,6 +443,12 @@ a {
 }
 
 /* ---------- Participant detail ---------- */
+.detail-actions {
+  margin-top: 22px;
+  display: flex;
+  justify-content: flex-start;
+}
+
 .back-link {
   color: var(--text-dim);
   font-size: 0.9rem;
@@ -751,6 +757,22 @@ a {
 .admin-form-title {
   font-size: 1.05rem;
   color: var(--accent-2);
+}
+
+.check-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  font-size: 0.95rem;
+  cursor: pointer;
+  user-select: none;
+}
+.check-row input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--accent-2);
+  cursor: pointer;
 }
 
 .form-grid {

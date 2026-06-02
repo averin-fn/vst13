@@ -12,7 +12,7 @@ router.use(requireAuth);
 /* ---------------- Участники ---------------- */
 const PARTICIPANT_FIELDS = ['name', 'callsign', 'role', 'bio', 'photo', 'model_url', 'joined_date'];
 const PARTICIPANT_ADMIN_COLS =
-  'id, name, callsign, role, bio, photo, model_url, joined_date, username';
+  'id, name, callsign, role, bio, photo, model_url, joined_date, username, can_manage_events';
 
 function pick(body, fields) {
   const out = {};
@@ -69,11 +69,12 @@ router.post('/participants', (req, res) => {
   } catch (err) {
     return res.status(err.status || 400).json({ error: err.message });
   }
+  const canManage = req.body.can_manage_events ? 1 : 0;
   try {
     const info = db
       .prepare(
-        `INSERT INTO participants (name, callsign, role, bio, photo, model_url, joined_date, username, password_hash)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO participants (name, callsign, role, bio, photo, model_url, joined_date, username, password_hash, can_manage_events)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         data.name,
@@ -84,7 +85,8 @@ router.post('/participants', (req, res) => {
         data.model_url,
         data.joined_date,
         auth.username,
-        auth.password_hash
+        auth.password_hash,
+        canManage
       );
     res.status(201).json({ id: Number(info.lastInsertRowid) });
   } catch (err) {
@@ -138,6 +140,13 @@ router.put('/participants/:id', (req, res) => {
       return res.status(409).json({ error: 'Такой логин уже занят' });
     }
     throw err;
+  }
+  // Право управлять мероприятиями
+  if ('can_manage_events' in req.body) {
+    db.prepare('UPDATE participants SET can_manage_events = ? WHERE id = ?').run(
+      req.body.can_manage_events ? 1 : 0,
+      req.params.id
+    );
   }
   res.json({ ok: true });
 });
