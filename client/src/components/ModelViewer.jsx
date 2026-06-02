@@ -1,4 +1,4 @@
-import { Suspense, useMemo } from 'react';
+import { Suspense, useMemo, Component } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { OrbitControls, useGLTF, Html } from '@react-three/drei';
 import * as THREE from 'three';
@@ -89,6 +89,32 @@ function Loader() {
   return <Html center>Загрузка модели…</Html>;
 }
 
+// Если .glb не загрузился (битый файл, 404 и т.п.) — useGLTF бросает исключение.
+// Suspense ловит только загрузку, но не ошибки, поэтому без этого границы
+// падал бы весь ParticipantDetail. Здесь подменяем модель на заглушку-бойца.
+class ModelErrorBoundary extends Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidUpdate(prevProps) {
+    // Сброс ошибки при смене модели (например, переход к другому участнику)
+    if (prevProps.resetKey !== this.props.resetKey && this.state.hasError) {
+      this.setState({ hasError: false });
+    }
+  }
+
+  render() {
+    if (this.state.hasError) return this.props.fallback;
+    return this.props.children;
+  }
+}
+
 export default function ModelViewer({ modelUrl }) {
   return (
     <div className="model-viewer">
@@ -96,9 +122,11 @@ export default function ModelViewer({ modelUrl }) {
         <ambientLight intensity={0.6} />
         <directionalLight position={[5, 8, 5]} intensity={1.1} castShadow />
         <directionalLight position={[-5, 3, -4]} intensity={0.4} />
-        <Suspense fallback={<Loader />}>
-          {modelUrl ? <GLBModel url={modelUrl} /> : <PlaceholderSoldier />}
-        </Suspense>
+        <ModelErrorBoundary resetKey={modelUrl} fallback={<PlaceholderSoldier />}>
+          <Suspense fallback={<Loader />}>
+            {modelUrl ? <GLBModel url={modelUrl} /> : <PlaceholderSoldier />}
+          </Suspense>
+        </ModelErrorBoundary>
         <gridHelper args={[8, 16, '#3a3f2a', '#23261a']} position={[0, -1, 0]} />
         <OrbitControls
           enablePan={false}
