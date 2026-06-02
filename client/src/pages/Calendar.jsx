@@ -44,14 +44,41 @@ function formatDateRu(iso) {
   return d.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
 }
 
+function VoteGroup({ label, status, people }) {
+  return (
+    <div className={`vote-group vote-${status}`}>
+      <div className="vote-group-head">
+        <span className="vote-group-label">{label}</span>
+        <span className="vote-group-count">{people.length}</span>
+      </div>
+      {people.length > 0 && (
+        <div className="vote-chips">
+          {people.map((p) => (
+            <span key={p.id} className="vote-chip" title={p.name}>
+              «{p.callsign}»
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Calendar() {
   const now = new Date();
   const [view, setView] = useState({ y: now.getFullYear(), m: now.getMonth() });
   const [selected, setSelected] = useState(todayIso());
   const [events, setEvents] = useState([]);
   const [rsvps, setRsvps] = useState({}); // eventId -> 'yes'|'no'|'maybe'
+  const [votes, setVotes] = useState({}); // eventId -> [{id, callsign, name, status}]
   const [error, setError] = useState('');
   const memberAuthed = isMemberAuthed();
+
+  const loadVotes = (eventId) =>
+    api
+      .getEventVotes(eventId)
+      .then((list) => setVotes((prev) => ({ ...prev, [eventId]: list })))
+      .catch(() => {});
 
   useEffect(() => {
     api.getEvents().then(setEvents).catch(() => {});
@@ -80,6 +107,12 @@ export default function Calendar() {
   }, [events]);
 
   const selectedEvents = eventsByDate.get(selected) || [];
+
+  // При смене выбранной даты — подгружаем статистику голосов для каждого события
+  useEffect(() => {
+    selectedEvents.forEach((e) => loadVotes(e.id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selected, events.length]);
 
   const shiftMonth = (delta) => {
     setView((v) => {
@@ -111,6 +144,7 @@ export default function Calendar() {
         await api.setMyRsvp(eventId, status);
         setRsvps((prev) => ({ ...prev, [eventId]: status }));
       }
+      await loadVotes(eventId);
     } catch (err) {
       setError(err.message);
     }
@@ -173,38 +207,53 @@ export default function Calendar() {
           <p className="notice">На эту дату игр пока не запланировано.</p>
         )}
 
-        {selectedEvents.map((e) => (
-          <article key={e.id} className="card event-card cal-event">
-            <div className="event-body">
-              <h3 className="event-title">{e.title}</h3>
-              {e.location && <p className="event-location">📍 {e.location}</p>}
-              {e.description && <p className="event-description">{e.description}</p>}
+        {selectedEvents.map((e) => {
+          const list = votes[e.id] || [];
+          const yes = list.filter((v) => v.status === 'yes');
+          const maybe = list.filter((v) => v.status === 'maybe');
+          const no = list.filter((v) => v.status === 'no');
+          return (
+            <article key={e.id} className="card event-card cal-event">
+              <div className="event-body">
+                <h3 className="event-title">{e.title}</h3>
+                {e.location && <p className="event-location">📍 {e.location}</p>}
+                {e.description && <p className="event-description">{e.description}</p>}
 
-              {memberAuthed ? (
-                <div className="rsvp-actions">
-                  <button
-                    type="button"
-                    className={`rsvp-btn rsvp-yes ${rsvps[e.id] === 'yes' ? 'active' : ''}`}
-                    onClick={() => setRsvp(e.id, 'yes')}
-                  >
-                    Поеду
-                  </button>
-                  <button
-                    type="button"
-                    className={`rsvp-btn rsvp-no ${rsvps[e.id] === 'no' ? 'active' : ''}`}
-                    onClick={() => setRsvp(e.id, 'no')}
-                  >
-                    Не поеду
-                  </button>
+                {memberAuthed ? (
+                  <div className="rsvp-actions">
+                    <button
+                      type="button"
+                      className={`rsvp-btn rsvp-yes ${rsvps[e.id] === 'yes' ? 'active' : ''}`}
+                      onClick={() => setRsvp(e.id, 'yes')}
+                    >
+                      Поеду
+                    </button>
+                    <button
+                      type="button"
+                      className={`rsvp-btn rsvp-no ${rsvps[e.id] === 'no' ? 'active' : ''}`}
+                      onClick={() => setRsvp(e.id, 'no')}
+                    >
+                      Не поеду
+                    </button>
+                  </div>
+                ) : (
+                  <p className="cal-login-hint">
+                    Войдите в <Link to="/cabinet/login" className="link">личный кабинет</Link>, чтобы голосовать.
+                  </p>
+                )}
+
+                <div className="vote-stats">
+                  <VoteGroup label="Поеду" status="yes" people={yes} />
+                  {maybe.length > 0 && <VoteGroup label="Под вопросом" status="maybe" people={maybe} />}
+                  <VoteGroup label="Не поеду" status="no" people={no} />
+                  {list.length === 0 && (
+                    <p className="vote-empty">Голосов пока нет.</p>
+                  )}
                 </div>
-              ) : (
-                <p className="cal-login-hint">
-                  Войдите в <Link to="/cabinet/login" className="link">личный кабинет</Link>, чтобы голосовать.
-                </p>
-              )}
-            </div>
-          </article>
-        ))}
+              </div>
+            </article>
+          );
+        })}
         {error && <p className="notice notice-error">{error}</p>}
       </div>
     </div>

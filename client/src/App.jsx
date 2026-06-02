@@ -3,7 +3,6 @@ import PublicLayout from './components/PublicLayout.jsx';
 import Home from './pages/Home.jsx';
 import Participants from './pages/Participants.jsx';
 import ParticipantDetail from './pages/ParticipantDetail.jsx';
-import Events from './pages/Events.jsx';
 import Feedback from './pages/Feedback.jsx';
 import Calendar from './pages/Calendar.jsx';
 import Login from './pages/admin/Login.jsx';
@@ -26,7 +25,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/participants" element={<Participants />} />
         <Route path="/participants/:id" element={<ParticipantDetail />} />
-        <Route path="/events" element={<Events />} />
+        <Route path="/events" element={<Navigate to="/calendar" replace />} />
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/feedback" element={<Feedback />} />
         <Route path="*" element={<p className="notice">Страница не найдена</p>} />

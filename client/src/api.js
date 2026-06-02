@@ -69,6 +69,7 @@ export const api = {
   getParticipants: () => request('/participants'),
   getParticipant: (id) => request(`/participants/${id}`),
   getEvents: () => request('/events'),
+  getEventVotes: (id) => request(`/events/${id}/rsvps`),
   getSettings: () => request('/settings'),
   sendFeedback: (payload) => request('/feedback', { method: 'POST', body: JSON.stringify(payload) }),
 

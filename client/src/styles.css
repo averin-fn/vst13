@@ -1114,7 +1114,17 @@ a {
   border-color: var(--accent-2);
 }
 .calendar-cell.has-events {
-  background: rgba(170, 184, 134, 0.08);
+  background: rgba(170, 184, 134, 0.22);
+  border-color: rgba(170, 184, 134, 0.55);
+  box-shadow: inset 3px 0 0 var(--accent-2);
+}
+.calendar-cell.has-events:hover {
+  background: rgba(170, 184, 134, 0.32);
+  border-color: var(--accent-2);
+}
+.calendar-cell.has-events .cal-day {
+  color: var(--text);
+  font-weight: 800;
 }
 .cal-day {
   font-weight: 700;
@@ -1122,15 +1132,16 @@ a {
 }
 .cal-dots {
   display: flex;
-  gap: 3px;
+  gap: 4px;
   margin-top: auto;
   align-self: flex-end;
 }
 .cal-dot {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--accent-2);
+  box-shadow: 0 0 6px rgba(170, 184, 134, 0.65);
 }
 
 .calendar-panel {
@@ -1150,6 +1161,67 @@ a {
   color: var(--text-dim);
   font-size: 0.9rem;
   margin-top: 12px;
+}
+
+.vote-stats {
+  margin-top: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-top: 1px solid var(--border);
+  padding-top: 14px;
+}
+.vote-empty {
+  color: var(--text-dim);
+  font-size: 0.88rem;
+}
+.vote-group {
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--text-dim);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.vote-group.vote-yes { border-left-color: var(--accent-2); }
+.vote-group.vote-maybe { border-left-color: var(--tan); }
+.vote-group.vote-no { border-left-color: var(--danger); }
+.vote-group-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  font-family: var(--font-head);
+  text-transform: uppercase;
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+}
+.vote-group-label { color: var(--text); }
+.vote-group.vote-yes .vote-group-label { color: var(--accent-2); }
+.vote-group.vote-maybe .vote-group-label { color: var(--tan); }
+.vote-group.vote-no .vote-group-label { color: var(--danger); }
+.vote-group-count {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 1px 9px;
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  min-width: 24px;
+  text-align: center;
+}
+.vote-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+.vote-chip {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 0.82rem;
+  color: var(--text);
+  cursor: default;
 }
 
 @media (max-width: 760px) {

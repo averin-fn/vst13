@@ -19,7 +19,7 @@ export default function Home() {
           <Link to="/participants" className="btn btn-primary">
             Состав команды
           </Link>
-          <Link to="/events" className="btn btn-ghost">
+          <Link to="/calendar" className="btn btn-ghost">
             Ближайшие игры
           </Link>
         </div>
