@@ -11,16 +11,11 @@ BACKUP_KEEP_DAYS="${BACKUP_KEEP_DAYS:-30}"
 
 cd "$APP_DIR"
 
-# 1. Бэкап SQLite-базы (если уже создана) + временная копия для восстановления.
-# data.db не версионируется, поэтому git reset --hard удалит её из рабочей папки —
-# сохраняем во временный файл и возвращаем после reset, чтобы не потерять данные.
-KEEP_DB=""
+# 1. Бэкап SQLite-базы (если уже создана).
 if [ -f server/data.db ]; then
   mkdir -p "$BACKUP_DIR"
   cp server/data.db "$BACKUP_DIR/data-$(date +%Y%m%dT%H%M%S).db"
   find "$BACKUP_DIR" -name 'data-*.db' -mtime "+$BACKUP_KEEP_DAYS" -delete
-  KEEP_DB="$(mktemp)"
-  cp server/data.db "$KEEP_DB"
   echo "==> Бэкап БД сделан"
 fi
 
@@ -28,15 +23,6 @@ fi
 echo "==> git pull"
 git fetch origin
 git reset --hard origin/master
-
-# 2.1 Возвращаем живую БД, если reset её удалил.
-if [ -n "$KEEP_DB" ]; then
-  if [ ! -f server/data.db ]; then
-    cp "$KEEP_DB" server/data.db
-    echo "==> Восстановлена БД после reset"
-  fi
-  rm -f "$KEEP_DB"
-fi
 
 # 3. Зависимости сервера.
 # Клиент (client/dist) собирается в GitHub Actions и копируется по scp,
