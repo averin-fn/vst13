@@ -476,6 +476,23 @@ a {
   font-size: 0.8rem;
 }
 
+/* В карточке участника позывной — крупный и белый, имя — мелкое и приглушённое */
+.participant-card-body .participant-callsign {
+  display: block;
+  color: #fff;
+  font-weight: 800;
+  font-size: 1.35rem;
+  margin: 0 0 4px;
+}
+
+.participant-card-body .participant-name {
+  display: block;
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin: 0 0 8px;
+}
+
 .card-cta {
   padding: 13px 16px;
   border-top: 1px solid var(--border);
@@ -524,10 +541,24 @@ a {
   object-fit: cover;
 }
 
-.detail-name {
+/* Позывной — крупный белый заголовок, имя — мельче и приглушённое */
+.detail-callsign {
+  display: block;
+  color: #fff;
+  font-family: var(--font-head);
+  text-transform: uppercase;
   font-size: 2.1rem;
   font-weight: 800;
-  margin: 6px 0 10px;
+  margin: 6px 0 4px;
+}
+
+.detail-info .detail-name {
+  display: block;
+  color: var(--text-dim);
+  font-weight: 600;
+  font-size: 1.05rem;
+  text-transform: none;
+  margin: 0 0 10px;
 }
 
 .detail-role {

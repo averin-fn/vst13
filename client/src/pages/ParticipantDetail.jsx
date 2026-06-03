@@ -45,8 +45,8 @@ export default function ParticipantDetail() {
         </div>
 
         <div className="detail-info">
-          <span className="participant-callsign">«{participant.callsign}»</span>
-          <h1 className="detail-name">{participant.name}</h1>
+          <h1 className="detail-callsign">«{participant.callsign}»</h1>
+          <span className="detail-name">{participant.name}</span>
           <span className="participant-role detail-role">{participant.role}</span>
 
           {participant.joined_date && (

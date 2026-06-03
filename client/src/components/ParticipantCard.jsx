@@ -12,8 +12,8 @@ export default function ParticipantCard({ participant }) {
         )}
       </div>
       <div className="participant-card-body">
-        <span className="participant-callsign">«{callsign}»</span>
-        <h3 className="participant-name">{name}</h3>
+        <h3 className="participant-callsign">«{callsign}»</h3>
+        <span className="participant-name">{name}</span>
         <span className="participant-role">{role}</span>
       </div>
       <span className="card-cta">Подробнее →</span>
