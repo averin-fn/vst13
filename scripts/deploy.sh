@@ -24,6 +24,11 @@ echo "==> git pull"
 git fetch origin
 git reset --hard origin/master
 
+# 2.1 Чистим WAL/SHM SQLite: они в .gitignore, поэтому reset --hard их не трогает,
+# и старый журнал «перекрывал» бы только что развёрнутую data.db. Удаляем, чтобы
+# источником истины была закоммиченная база (бэкап сделан выше).
+rm -f server/data.db-wal server/data.db-shm
+
 # 3. Зависимости сервера.
 # Клиент (client/dist) собирается в GitHub Actions и копируется по scp,
 # чтобы не нагружать сервер сборкой.
