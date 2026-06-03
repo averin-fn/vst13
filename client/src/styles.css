@@ -439,13 +439,51 @@ a {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 20px;
+  gap: 16px;
   width: 100%;
 }
 
-/* Карточки в дереве — фиксированной ширины, чтобы уровни читались как ряды */
+/* Компактные узлы дерева: маленький круглый аватар вместо крупного фото */
 .org-tier-nodes .participant-card {
-  width: 240px;
+  width: 150px;
+}
+
+.org-tier-nodes .participant-photo {
+  aspect-ratio: auto;
+  width: 80px;
+  height: 80px;
+  margin: 14px auto 0;
+  border-radius: 50%;
+  overflow: hidden;
+}
+
+.org-tier-nodes .participant-photo-placeholder {
+  font-size: 1.7rem;
+}
+
+.org-tier-nodes .participant-card-body {
+  padding: 10px 12px 12px;
+  text-align: center;
+}
+
+.org-tier-nodes .participant-card-body .participant-callsign {
+  font-size: 1rem;
+  margin-bottom: 2px;
+}
+
+.org-tier-nodes .participant-card-body .participant-name {
+  font-size: 0.75rem;
+  margin-bottom: 6px;
+}
+
+.org-tier-nodes .participant-role {
+  font-size: 0.68rem;
+  padding: 2px 9px;
+}
+
+/* В компактном дереве кнопка-призыв не нужна — вся карточка кликабельна */
+.org-tier-nodes .card-cta {
+  display: none;
 }
 
 /* Соединительная «жила» между уровнями: корень сверху, ветви снизу */
