@@ -8,7 +8,10 @@ client/dist/
 *.log
 npm-debug.log*
 
-# SQLite runtime (журналы WAL)
+# SQLite runtime: сама база и журналы WAL — данные приложения, не версионируем.
+# Каждое окружение (локально/сервер) хранит свою БД; схема и сид создаются в db.js.
+server/data.db
+server/backups/
 *.db-wal
 *.db-shm
 
