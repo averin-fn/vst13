@@ -1,24 +1,41 @@
 import { Fragment, useEffect, useState } from 'react';
 import { api } from '../api';
-import { ROLES } from '../roles';
+import { ROLE_TIERS } from '../roles';
 import ParticipantCard from '../components/ParticipantCard.jsx';
 
-// Группируем участников по должностям в порядке иерархии.
-// Известные должности идут сверху вниз (корень → ветви),
-// все прочие роли собираются в завершающий уровень «Прочие».
-function buildTiers(participants) {
-  const tiers = ROLES.map((role) => ({ role, members: [] }));
-  const others = [];
-
+// Строим уровни дерева. Каждый уровень — список групп по должностям,
+// каждая группа — участники этой должности. Корень сверху, ветви снизу.
+// Должности вне иерархии собираются в завершающий уровень «Прочие».
+function buildLevels(participants) {
+  const byRole = new Map();
   for (const p of participants) {
-    const idx = ROLES.indexOf(p.role);
-    if (idx === -1) others.push(p);
-    else tiers[idx].members.push(p);
+    if (!byRole.has(p.role)) byRole.set(p.role, []);
+    byRole.get(p.role).push(p);
   }
 
-  const result = tiers.filter((t) => t.members.length > 0);
-  if (others.length > 0) result.push({ role: 'Прочие', members: others });
-  return result;
+  const known = new Set();
+  const levels = [];
+
+  for (const tierRoles of ROLE_TIERS) {
+    const groups = [];
+    for (const role of tierRoles) {
+      const members = byRole.get(role);
+      if (members && members.length > 0) {
+        groups.push({ role, members });
+        known.add(role);
+      }
+    }
+    if (groups.length > 0) levels.push(groups);
+  }
+
+  // Участники с должностями вне иерархии — отдельным уровнем «Прочие»
+  const others = [];
+  for (const [role, members] of byRole) {
+    if (!known.has(role)) others.push(...members);
+  }
+  if (others.length > 0) levels.push([{ role: 'Прочие', members: others }]);
+
+  return levels;
 }
 
 export default function Participants() {
@@ -35,7 +52,7 @@ export default function Participants() {
       .catch(() => setStatus('error'));
   }, []);
 
-  const tiers = buildTiers(participants);
+  const levels = buildLevels(participants);
 
   return (
     <div className="page">
@@ -54,16 +71,20 @@ export default function Participants() {
 
       {status === 'ready' && participants.length > 0 && (
         <div className="org-tree">
-          {tiers.map((tier, i) => (
-            <Fragment key={tier.role}>
+          {levels.map((groups, i) => (
+            <Fragment key={i}>
               {i > 0 && <div className="org-connector" aria-hidden="true" />}
-              <div className="org-tier">
-                <span className="org-tier-label">{tier.role}</span>
-                <div className="org-tier-nodes">
-                  {tier.members.map((p) => (
-                    <ParticipantCard key={p.id} participant={p} />
-                  ))}
-                </div>
+              <div className="org-level">
+                {groups.map((group) => (
+                  <div className="org-group" key={group.role}>
+                    <span className="org-tier-label">{group.role}</span>
+                    <div className="org-tier-nodes">
+                      {group.members.map((p) => (
+                        <ParticipantCard key={p.id} participant={p} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
               </div>
             </Fragment>
           ))}

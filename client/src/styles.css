@@ -415,11 +415,21 @@ a {
   align-items: center;
 }
 
-.org-tier {
+/* Уровень дерева: одна или несколько групп-должностей в ряд */
+.org-level {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 16px 36px;
+  width: 100%;
+}
+
+/* Группа одной должности: подпись + узлы под ней */
+.org-group {
   display: flex;
   flex-direction: column;
   align-items: center;
-  width: 100%;
 }
 
 .org-tier-label {
