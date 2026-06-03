@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Outlet, NavLink, Navigate, useNavigate, Link } from 'react-router-dom';
-import { api, isMemberAuthed, clearMemberToken } from '../../api';
+import { api, isMemberAuthed, clearMemberToken, setToken } from '../../api';
 
 const links = [
   { to: '/cabinet/profile', label: 'Профиль' },
@@ -40,6 +40,16 @@ export default function Cabinet() {
     navigate('/cabinet/login', { replace: true });
   };
 
+  const openAdmin = async () => {
+    try {
+      const { token } = await api.getAdminToken();
+      setToken(token);
+      navigate('/admin');
+    } catch {
+      /* нет прав — ничего не делаем */
+    }
+  };
+
   return (
     <div className="app">
       <aside className="sidebar">
@@ -74,6 +84,11 @@ export default function Cabinet() {
             >
               Управление играми
             </NavLink>
+          )}
+          {!!me?.is_admin && (
+            <button type="button" className="nav-link nav-link-btn" onClick={openAdmin}>
+              ⚙ Админ-панель
+            </button>
           )}
         </nav>
         <div className="sidebar-bottom">

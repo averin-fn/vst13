@@ -13,7 +13,8 @@ const EMPTY = {
   joined_date: '',
   username: '',
   password: '',
-  can_manage_events: false
+  can_manage_events: false,
+  is_admin: false
 };
 
 export default function ParticipantsAdmin() {
@@ -55,7 +56,8 @@ export default function ParticipantsAdmin() {
         joined_date: full.joined_date,
         username: full.username || '',
         password: '',
-        can_manage_events: !!full.can_manage_events
+        can_manage_events: !!full.can_manage_events,
+        is_admin: !!full.is_admin
       });
       setHadAccount(!!full.username);
     } catch (err) {
@@ -171,6 +173,14 @@ export default function ParticipantsAdmin() {
             onChange={(e) => setForm({ ...form, can_manage_events: e.target.checked })}
           />
           <span>Может редактировать календарь и мероприятия</span>
+        </label>
+        <label className="check-row">
+          <input
+            type="checkbox"
+            checked={form.is_admin}
+            onChange={(e) => setForm({ ...form, is_admin: e.target.checked })}
+          />
+          <span>Администратор (доступ в админ-панель из личного кабинета)</span>
         </label>
 
         <h3 className="admin-form-title">Аккаунт личного кабинета</h3>

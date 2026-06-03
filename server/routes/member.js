@@ -1,12 +1,13 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const db = require('../db');
-const { signMember, requireMember, ensureEventManager } = require('../middleware/auth');
+const { signAdmin, signMember, requireMember, ensureEventManager } = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
 const router = express.Router();
 
-const ME_COLS = 'id, name, callsign, role, bio, photo, model_url, joined_date, username, can_manage_events';
+const ME_COLS =
+  'id, name, callsign, role, bio, photo, model_url, joined_date, username, can_manage_events, is_admin';
 
 /* ---------- Авторизация ---------- */
 router.post('/login', (req, res) => {
@@ -72,6 +73,20 @@ router.post('/password', requireMember, (req, res) => {
   const hash = bcrypt.hashSync(next, 10);
   db.prepare('UPDATE participants SET password_hash = ? WHERE id = ?').run(hash, req.member.participantId);
   res.json({ ok: true });
+});
+
+/* ---------- Доступ в админ-панель ---------- */
+// Участник с флагом is_admin может получить админ-токен прямо из кабинета,
+// не вводя отдельные учётные данные. Существующая админка работает как прежде.
+router.post('/admin-token', requireMember, (req, res) => {
+  const row = db
+    .prepare('SELECT id, username, is_admin FROM participants WHERE id = ?')
+    .get(req.member.participantId);
+  if (!row || !row.is_admin) {
+    return res.status(403).json({ error: 'Нет прав администратора' });
+  }
+  const token = signAdmin({ participantId: row.id, username: row.username });
+  res.json({ token });
 });
 
 /* ---------- Общий чат ---------- */

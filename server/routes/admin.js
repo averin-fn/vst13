@@ -12,7 +12,7 @@ router.use(requireAuth);
 /* ---------------- Участники ---------------- */
 const PARTICIPANT_FIELDS = ['name', 'callsign', 'role', 'bio', 'photo', 'model_url', 'joined_date'];
 const PARTICIPANT_ADMIN_COLS =
-  'id, name, callsign, role, bio, photo, model_url, joined_date, username, can_manage_events';
+  'id, name, callsign, role, bio, photo, model_url, joined_date, username, can_manage_events, is_admin';
 
 function pick(body, fields) {
   const out = {};
@@ -70,11 +70,12 @@ router.post('/participants', (req, res) => {
     return res.status(err.status || 400).json({ error: err.message });
   }
   const canManage = req.body.can_manage_events ? 1 : 0;
+  const isAdmin = req.body.is_admin ? 1 : 0;
   try {
     const info = db
       .prepare(
-        `INSERT INTO participants (name, callsign, role, bio, photo, model_url, joined_date, username, password_hash, can_manage_events)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO participants (name, callsign, role, bio, photo, model_url, joined_date, username, password_hash, can_manage_events, is_admin)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         data.name,
@@ -86,7 +87,8 @@ router.post('/participants', (req, res) => {
         data.joined_date,
         auth.username,
         auth.password_hash,
-        canManage
+        canManage,
+        isAdmin
       );
     res.status(201).json({ id: Number(info.lastInsertRowid) });
   } catch (err) {
@@ -145,6 +147,13 @@ router.put('/participants/:id', (req, res) => {
   if ('can_manage_events' in req.body) {
     db.prepare('UPDATE participants SET can_manage_events = ? WHERE id = ?').run(
       req.body.can_manage_events ? 1 : 0,
+      req.params.id
+    );
+  }
+  // Права администратора
+  if ('is_admin' in req.body) {
+    db.prepare('UPDATE participants SET is_admin = ? WHERE id = ?').run(
+      req.body.is_admin ? 1 : 0,
       req.params.id
     );
   }

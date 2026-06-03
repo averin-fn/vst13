@@ -112,6 +112,8 @@ export const api = {
   memberLogin: (username, password) =>
     request('/member/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
   getMe: () => request('/member/me', { memberAuth: true }),
+  // Участник-админ получает админ-токен прямо из кабинета
+  getAdminToken: () => request('/member/admin-token', { method: 'POST', memberAuth: true }),
   updateMe: (data) =>
     request('/member/me', { method: 'PUT', memberAuth: true, body: JSON.stringify(data) }),
   memberUpload: (file) => {
