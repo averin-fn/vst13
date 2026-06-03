@@ -1,0 +1,20 @@
+[Unit]
+Description=vst13 — сайт команды (Express + node:sqlite)
+After=network.target
+
+[Service]
+Type=simple
+# node:sqlite требует Node.js 22+
+WorkingDirectory=/opt/vst13/server
+ExecStart=/usr/bin/node index.js
+Restart=on-failure
+RestartSec=3
+User=vst13
+# Секреты (JWT_SECRET, ADMIN_USER, ADMIN_PASSWORD, при желании PORT)
+# хранятся вне репозитория:
+EnvironmentFile=-/opt/vst13/.env
+Environment=NODE_ENV=production
+Environment=PORT=4100
+
+[Install]
+WantedBy=multi-user.target
