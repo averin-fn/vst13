@@ -20,4 +20,4 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: ${{ secrets.APP_DIR }}/scripts/deploy.sh
+          script: cd /opt/vst13 && bash scripts/deploy.sh

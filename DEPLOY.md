@@ -89,7 +89,9 @@ sudo certbot --nginx -d example.com
 | `SSH_PORT`        | SSH-порт                               | `22`             |
 | `SSH_USER`        | SSH-пользователь                       | `vst13`          |
 | `SSH_PRIVATE_KEY` | приватный ключ (без пароля, целиком)   | `-----BEGIN ...` |
-| `APP_DIR`         | путь до приложения                     | `/opt/vst13`     |
+
+> Путь до приложения (`/opt/vst13`) захардкожен в workflow. Если разворачиваете в другую
+> папку — поправьте `script:` в [.github/workflows/deploy.yml](.github/workflows/deploy.yml).
 
 Публичный ключ пары добавить в `/opt/vst13/.ssh/authorized_keys` пользователю `vst13`.
 
