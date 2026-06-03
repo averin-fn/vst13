@@ -504,6 +504,91 @@ a {
   margin: 4px 0 18px;
 }
 
+/* Ряд отрядов: каждый отряд — отдельная колонка (командир + его солдаты) */
+.org-squads {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 24px 32px;
+  width: 100%;
+}
+
+.org-squad {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Солдаты отряда под командиром — с ветвящимися соединителями (стрелки вниз) */
+.org-children {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 16px;
+  padding-top: 26px;
+}
+
+.org-child {
+  position: relative;
+  padding-top: 14px;
+}
+
+/* Вертикаль от каждого солдата вверх к горизонтальной «шине» */
+.org-child::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 14px;
+  background: var(--border);
+  transform: translateX(-1px);
+}
+
+/* Стрелка (наконечник) вниз — к карточке солдата */
+.org-child::after {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--accent-2);
+  transform: translateX(-4px);
+}
+
+/* Горизонтальная «шина» под командиром + стебель от командира к ней */
+.org-children::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: var(--border);
+}
+
+.org-children::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 12px;
+  background: var(--accent-2);
+  transform: translateX(-1px);
+}
+
+/* Один солдат — «шина» не нужна, оставляем только вертикаль */
+.org-children.single::before {
+  left: 50%;
+  right: 50%;
+}
+
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border);

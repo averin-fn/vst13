@@ -1,41 +1,47 @@
-import { Fragment, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../api';
-import { ROLE_TIERS } from '../roles';
+import { TOP_ROLES, SQUADS, SOLDIER_ROLE, squadCommanderRole } from '../roles';
 import ParticipantCard from '../components/ParticipantCard.jsx';
 
-// Строим уровни дерева. Каждый уровень — список групп по должностям,
-// каждая группа — участники этой должности. Корень сверху, ветви снизу.
-// Должности вне иерархии собираются в завершающий уровень «Прочие».
-function buildLevels(participants) {
-  const byRole = new Map();
-  for (const p of participants) {
-    if (!byRole.has(p.role)) byRole.set(p.role, []);
-    byRole.get(p.role).push(p);
-  }
+// Раскладываем участников по структуре дерева:
+//  - top: командование (Командир, Замполит)
+//  - squads: отряды (командир отряда + его солдаты)
+//  - others: должности/солдаты вне структуры — отдельным блоком, чтобы никто не пропал
+function buildTree(participants) {
+  const assigned = new Set();
 
-  const known = new Set();
-  const levels = [];
+  const top = TOP_ROLES.map((role) => {
+    const members = participants.filter((p) => p.role === role);
+    members.forEach((p) => assigned.add(p.id));
+    return { role, members };
+  }).filter((g) => g.members.length > 0);
 
-  for (const tierRoles of ROLE_TIERS) {
-    const groups = [];
-    for (const role of tierRoles) {
-      const members = byRole.get(role);
-      if (members && members.length > 0) {
-        groups.push({ role, members });
-        known.add(role);
-      }
-    }
-    if (groups.length > 0) levels.push(groups);
-  }
+  const squads = SQUADS.map((n) => {
+    const commanderRole = squadCommanderRole(n);
+    const commanders = participants.filter((p) => p.role === commanderRole);
+    const soldiers = participants.filter(
+      (p) => p.role === SOLDIER_ROLE && Number(p.squad) === n
+    );
+    [...commanders, ...soldiers].forEach((p) => assigned.add(p.id));
+    return { n, commanderRole, commanders, soldiers };
+  }).filter((s) => s.commanders.length > 0 || s.soldiers.length > 0);
 
-  // Участники с должностями вне иерархии — отдельным уровнем «Прочие»
-  const others = [];
-  for (const [role, members] of byRole) {
-    if (!known.has(role)) others.push(...members);
-  }
-  if (others.length > 0) levels.push([{ role: 'Прочие', members: others }]);
+  const others = participants.filter((p) => !assigned.has(p.id));
 
-  return levels;
+  return { top, squads, others };
+}
+
+function Group({ role, members }) {
+  return (
+    <div className="org-group">
+      <span className="org-tier-label">{role}</span>
+      <div className="org-tier-nodes">
+        {members.map((p) => (
+          <ParticipantCard key={p.id} participant={p} />
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export default function Participants() {
@@ -52,13 +58,13 @@ export default function Participants() {
       .catch(() => setStatus('error'));
   }, []);
 
-  const levels = buildLevels(participants);
+  const { top, squads, others } = buildTree(participants);
 
   return (
     <div className="page">
       <h1 className="page-title">Участники</h1>
       <p className="page-subtitle">
-        Структура команды по должностям. Выберите бойца, чтобы увидеть досье и 3D-модель.
+        Структура команды по отрядам. Выберите бойца, чтобы увидеть досье и 3D-модель.
       </p>
 
       {status === 'loading' && <p className="notice">Загрузка…</p>}
@@ -71,23 +77,48 @@ export default function Participants() {
 
       {status === 'ready' && participants.length > 0 && (
         <div className="org-tree">
-          {levels.map((groups, i) => (
-            <Fragment key={i}>
-              {i > 0 && <div className="org-connector" aria-hidden="true" />}
-              <div className="org-level">
-                {groups.map((group) => (
-                  <div className="org-group" key={group.role}>
-                    <span className="org-tier-label">{group.role}</span>
-                    <div className="org-tier-nodes">
-                      {group.members.map((p) => (
-                        <ParticipantCard key={p.id} participant={p} />
-                      ))}
-                    </div>
+          {top.length > 0 && (
+            <div className="org-level">
+              {top.map((g) => (
+                <Group key={g.role} role={g.role} members={g.members} />
+              ))}
+            </div>
+          )}
+
+          {squads.length > 0 && (
+            <>
+              {top.length > 0 && <div className="org-connector" aria-hidden="true" />}
+              <div className="org-squads">
+                {squads.map((squad) => (
+                  <div className="org-squad" key={squad.n}>
+                    <Group role={squad.commanderRole} members={squad.commanders} />
+                    {squad.soldiers.length > 0 && (
+                      <div
+                        className={
+                          squad.soldiers.length === 1 ? 'org-children single' : 'org-children'
+                        }
+                      >
+                        {squad.soldiers.map((p) => (
+                          <div className="org-child" key={p.id}>
+                            <ParticipantCard participant={p} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
-            </Fragment>
-          ))}
+            </>
+          )}
+
+          {others.length > 0 && (
+            <>
+              <div className="org-connector" aria-hidden="true" />
+              <div className="org-level">
+                <Group role="Без отряда / прочие" members={others} />
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>

@@ -18,7 +18,8 @@ db.exec(`
     username TEXT,
     password_hash TEXT NOT NULL DEFAULT '',
     can_manage_events INTEGER NOT NULL DEFAULT 0,
-    is_admin INTEGER NOT NULL DEFAULT 0
+    is_admin INTEGER NOT NULL DEFAULT 0,
+    squad INTEGER NOT NULL DEFAULT 0
   );
 
   CREATE TABLE IF NOT EXISTS events (
@@ -113,6 +114,9 @@ try { db.exec('ALTER TABLE participants ADD COLUMN can_manage_events INTEGER NOT
 // Миграция: участник является администратором (0/1) — даёт доступ в админ-панель из кабинета
 try { db.exec('ALTER TABLE participants ADD COLUMN is_admin INTEGER NOT NULL DEFAULT 0'); } catch { /* колонка уже есть */ }
 
+// Миграция: номер отряда солдата (1..3; 0 — не назначен)
+try { db.exec('ALTER TABLE participants ADD COLUMN squad INTEGER NOT NULL DEFAULT 0'); } catch { /* колонка уже есть */ }
+
 // Дефолтный администратор при первом запуске.
 // Логин/пароль можно задать через переменные окружения ADMIN_USER / ADMIN_PASSWORD.
 const adminsCount = db.prepare('SELECT COUNT(*) AS c FROM admins').get().c;
@@ -146,6 +150,8 @@ if (participantsCount === 0) {
       '', '', '2020-01-20']
   ];
   for (const row of seed) insert.run(...row);
+  // Солдат «Медик» — в 1 отряд (демонстрация структуры дерева)
+  db.prepare("UPDATE participants SET squad = 1 WHERE callsign = 'Медик'").run();
 }
 
 const eventsCount = db.prepare('SELECT COUNT(*) AS c FROM events').get().c;

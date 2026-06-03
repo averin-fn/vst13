@@ -12,7 +12,13 @@ router.use(requireAuth);
 /* ---------------- Участники ---------------- */
 const PARTICIPANT_FIELDS = ['name', 'callsign', 'role', 'bio', 'photo', 'model_url', 'joined_date'];
 const PARTICIPANT_ADMIN_COLS =
-  'id, name, callsign, role, bio, photo, model_url, joined_date, username, can_manage_events, is_admin';
+  'id, name, callsign, role, bio, photo, model_url, joined_date, username, can_manage_events, is_admin, squad';
+
+// Номер отряда: целое 0..3 (0 — не назначен). Имеет смысл только для солдат.
+function normalizeSquad(value) {
+  const n = parseInt(value, 10);
+  return n >= 1 && n <= 3 ? n : 0;
+}
 
 function pick(body, fields) {
   const out = {};
@@ -71,11 +77,13 @@ router.post('/participants', (req, res) => {
   }
   const canManage = req.body.can_manage_events ? 1 : 0;
   const isAdmin = req.body.is_admin ? 1 : 0;
+  // Отряд имеет смысл только для солдат
+  const squad = data.role === 'Солдат' ? normalizeSquad(req.body.squad) : 0;
   try {
     const info = db
       .prepare(
-        `INSERT INTO participants (name, callsign, role, bio, photo, model_url, joined_date, username, password_hash, can_manage_events, is_admin)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO participants (name, callsign, role, bio, photo, model_url, joined_date, username, password_hash, can_manage_events, is_admin, squad)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         data.name,
@@ -88,7 +96,8 @@ router.post('/participants', (req, res) => {
         auth.username,
         auth.password_hash,
         canManage,
-        isAdmin
+        isAdmin,
+        squad
       );
     res.status(201).json({ id: Number(info.lastInsertRowid) });
   } catch (err) {
@@ -107,11 +116,13 @@ router.put('/participants/:id', (req, res) => {
   } catch (err) {
     return res.status(err.status || 400).json({ error: err.message });
   }
+  // Отряд имеет смысл только для солдат; при другой должности обнуляем
+  const squad = data.role === 'Солдат' ? normalizeSquad(req.body.squad) : 0;
   // Сначала обновляем основные поля
   const info = db
     .prepare(
       `UPDATE participants
-       SET name = ?, callsign = ?, role = ?, bio = ?, photo = ?, model_url = ?, joined_date = ?
+       SET name = ?, callsign = ?, role = ?, bio = ?, photo = ?, model_url = ?, joined_date = ?, squad = ?
        WHERE id = ?`
     )
     .run(
@@ -122,6 +133,7 @@ router.put('/participants/:id', (req, res) => {
       data.photo,
       data.model_url,
       data.joined_date,
+      squad,
       req.params.id
     );
   if (info.changes === 0) return res.status(404).json({ error: 'Участник не найден' });

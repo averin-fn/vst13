@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api';
-import { ROLES } from '../../roles';
+import { ROLES, SQUADS, SOLDIER_ROLE } from '../../roles';
 import FileField from '../../components/admin/FileField.jsx';
 
 const EMPTY = {
@@ -14,7 +14,8 @@ const EMPTY = {
   username: '',
   password: '',
   can_manage_events: false,
-  is_admin: false
+  is_admin: false,
+  squad: 0
 };
 
 export default function ParticipantsAdmin() {
@@ -57,7 +58,8 @@ export default function ParticipantsAdmin() {
         username: full.username || '',
         password: '',
         can_manage_events: !!full.can_manage_events,
-        is_admin: !!full.is_admin
+        is_admin: !!full.is_admin,
+        squad: full.squad || 0
       });
       setHadAccount(!!full.username);
     } catch (err) {
@@ -138,6 +140,25 @@ export default function ParticipantsAdmin() {
               )}
             </select>
           </label>
+          {form.role === SOLDIER_ROLE && (
+            <label className="field">
+              <span>Отряд *</span>
+              <select
+                value={form.squad}
+                onChange={(e) => setForm({ ...form, squad: Number(e.target.value) })}
+                required
+              >
+                <option value={0} disabled>
+                  — выберите отряд —
+                </option>
+                {SQUADS.map((n) => (
+                  <option key={n} value={n}>
+                    {n} отряд
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <label className="field">
             <span>В команде с (дата)</span>
             <input value={form.joined_date} onChange={update('joined_date')} placeholder="2020-01-20" />

@@ -4,7 +4,7 @@ const db = require('../db');
 const router = express.Router();
 
 const PUBLIC_COLS =
-  'id, name, callsign, role, bio, photo, model_url, joined_date';
+  'id, name, callsign, role, bio, photo, model_url, joined_date, squad';
 
 router.get('/', (req, res) => {
   const rows = db.prepare(`SELECT ${PUBLIC_COLS} FROM participants ORDER BY id`).all();
