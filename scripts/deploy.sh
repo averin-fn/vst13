@@ -24,12 +24,11 @@ echo "==> git pull"
 git fetch origin
 git reset --hard origin/master
 
-# 3. Зависимости + сборка клиента.
+# 3. Зависимости сервера.
+# Клиент (client/dist) собирается в GitHub Actions и копируется по scp,
+# чтобы не нагружать сервер сборкой.
 echo "==> Установка зависимостей сервера"
 ( cd server && npm install --omit=dev )
-
-echo "==> Сборка клиента"
-( cd client && npm install && npm run build )
 
 # 4. Рестарт сервиса.
 echo "==> Рестарт $SERVICE_NAME"

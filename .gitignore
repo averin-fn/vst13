@@ -1,6 +1,9 @@
 # Зависимости
 node_modules/
 
+# Сборка клиента (собирается в CI)
+client/dist/
+
 # Логи
 *.log
 npm-debug.log*

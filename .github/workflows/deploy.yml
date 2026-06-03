@@ -13,7 +13,39 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: SSH deploy
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: client/package-lock.json
+
+      # Сборка клиента в CI — на сервере не хватает RAM для vite build.
+      - name: Build client
+        working-directory: client
+        run: |
+          npm ci
+          npm run build
+
+      # Копируем готовый client/dist на сервер.
+      - name: Copy dist to server
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          port: ${{ secrets.SSH_PORT }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: client/dist
+          target: /opt/vst13
+          # без rm: target=/opt/vst13, удаление снесло бы весь каталог приложения.
+          # index.html и новые хешированные ассеты перезапишутся; старые ассеты
+          # (с другим хешем) безвредны — при желании чистятся в deploy.sh.
+
+      # Обновляем серверный код и перезапускаем сервис.
+      - name: Run deploy script
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SSH_HOST }}

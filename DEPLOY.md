@@ -1,8 +1,11 @@
 # Деплой vst13
 
-Простой деплой: **git pull на сервере + systemd**. GitHub Actions при пуше в `master`
-заходит по SSH и запускает [`scripts/deploy.sh`](scripts/deploy.sh), который делает
-бэкап БД, тянет код, ставит зависимости, собирает клиент и перезапускает сервис.
+Деплой: **git pull на сервере + systemd**, а клиент собирается в **GitHub Actions**
+(на сервере не хватает RAM для `vite build`). При пуше в `master` workflow:
+1. собирает `client/dist` в CI,
+2. копирует его на сервер по scp,
+3. по SSH запускает [`scripts/deploy.sh`](scripts/deploy.sh) — бэкап БД, git pull,
+   зависимости сервера, рестарт сервиса.
 
 Express в продакшене сам отдаёт собранный клиент (`client/dist`) и API на одном порту
 (`4100`), поэтому отдельный nginx нужен только для HTTPS.
@@ -58,15 +61,17 @@ echo 'vst13 ALL=(root) NOPASSWD: /usr/bin/systemctl restart vst13' \
   | sudo tee /etc/sudoers.d/vst13
 ```
 
-### 6. Первая сборка
+### 6. Первый деплой
 
-```bash
-cd /opt/vst13
-chmod +x scripts/deploy.sh
-sudo -u vst13 ./scripts/deploy.sh
-```
+Клиент собирается в GitHub Actions, поэтому первый `client/dist` приедет на сервер
+при первом прогоне workflow (см. раздел ниже) — запустите его пушем в `master` или
+вручную через **Actions → Deploy → Run workflow**.
 
-Открыть `http://<сервер>:4100`.
+Сервер при этом установит зависимости и поднимет сервис через [`scripts/deploy.sh`](scripts/deploy.sh).
+После успешного прогона открыть `http://<сервер>:4100`.
+
+> Запускать `deploy.sh` на сервере вручную не нужно — он не собирает клиент,
+> а только обновляет серверную часть и перезапускает сервис.
 
 ### 7. (Опционально) nginx + HTTPS
 
