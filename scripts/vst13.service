@@ -9,7 +9,9 @@ WorkingDirectory=/opt/vst13/server
 ExecStart=/usr/bin/node index.js
 Restart=on-failure
 RestartSec=3
-User=vst13
+# Запуск от root (каталог /opt/vst13 принадлежит root). Если хотите отдельного
+# пользователя — создайте его (useradd) и раскомментируйте, не забыв chown каталог:
+# User=vst13
 # Секреты (JWT_SECRET, ADMIN_USER, ADMIN_PASSWORD, при желании PORT)
 # хранятся вне репозитория:
 EnvironmentFile=-/opt/vst13/.env

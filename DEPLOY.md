@@ -21,21 +21,21 @@ curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
 sudo apt-get install -y nodejs git
 ```
 
-### 2. Пользователь и клонирование
+### 2. Клонирование
 
 ```bash
-sudo useradd -r -m -d /opt/vst13 vst13
-sudo -u vst13 git clone <repo-url> /opt/vst13
+sudo git clone <repo-url> /opt/vst13
 ```
 
-`/opt/vst13` — это `APP_DIR`.
+`/opt/vst13` — путь приложения (захардкожен в workflow). Сервис по умолчанию
+запускается от root; отдельный пользователь не обязателен.
 
 ### 3. Секреты (вне репозитория)
 
 Файл `/opt/vst13/.env` (используется в [server/middleware/auth.js](server/middleware/auth.js#L3) и [server/db.js](server/db.js#L124)):
 
 ```bash
-sudo -u vst13 tee /opt/vst13/.env >/dev/null <<EOF
+sudo tee /opt/vst13/.env >/dev/null <<EOF
 JWT_SECRET=$(openssl rand -hex 32)
 ADMIN_USER=admin
 ADMIN_PASSWORD=надёжный_пароль
@@ -54,10 +54,12 @@ sudo systemctl daemon-reload
 sudo systemctl enable --now vst13
 ```
 
-### 5. Разрешить рестарт без пароля (для деплоя по SSH)
+### 5. Рестарт без пароля (только если деплоите по SSH НЕ под root)
+
+Если `SSH_USER` = `root`, этот шаг не нужен. Иначе разрешите пользователю рестарт:
 
 ```bash
-echo 'vst13 ALL=(root) NOPASSWD: /usr/bin/systemctl restart vst13' \
+echo '<ssh-user> ALL=(root) NOPASSWD: /usr/bin/systemctl restart vst13' \
   | sudo tee /etc/sudoers.d/vst13
 ```
 
