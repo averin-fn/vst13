@@ -408,6 +408,54 @@ a {
   gap: 20px;
 }
 
+/* ---------- Дерево команды (страница «Участники») ---------- */
+.org-tree {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.org-tier {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.org-tier-label {
+  font-family: var(--font-head);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.85rem;
+  color: var(--accent-2);
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 5px 16px;
+  margin-bottom: 16px;
+}
+
+.org-tier-nodes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+  width: 100%;
+}
+
+/* Карточки в дереве — фиксированной ширины, чтобы уровни читались как ряды */
+.org-tier-nodes .participant-card {
+  width: 240px;
+}
+
+/* Соединительная «жила» между уровнями: корень сверху, ветви снизу */
+.org-connector {
+  width: 2px;
+  height: 34px;
+  background: linear-gradient(var(--accent-2), var(--border));
+  margin: 4px 0 18px;
+}
+
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -680,7 +728,8 @@ a {
 }
 
 .field input,
-.field textarea {
+.field textarea,
+.field select {
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -692,8 +741,14 @@ a {
   transition: border-color 0.15s;
 }
 
+.field select {
+  resize: none;
+  cursor: pointer;
+}
+
 .field input:focus,
-.field textarea:focus {
+.field textarea:focus,
+.field select:focus {
   outline: none;
   border-color: var(--accent-2);
 }

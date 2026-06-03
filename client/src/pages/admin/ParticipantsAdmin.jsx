@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api';
+import { ROLES } from '../../roles';
 import FileField from '../../components/admin/FileField.jsx';
 
 const EMPTY = {
@@ -119,8 +120,21 @@ export default function ParticipantsAdmin() {
             <input value={form.callsign} onChange={update('callsign')} required />
           </label>
           <label className="field">
-            <span>Роль *</span>
-            <input value={form.role} onChange={update('role')} required />
+            <span>Должность *</span>
+            <select value={form.role} onChange={update('role')} required>
+              <option value="" disabled>
+                — выберите должность —
+              </option>
+              {ROLES.map((role) => (
+                <option key={role} value={role}>
+                  {role}
+                </option>
+              ))}
+              {/* Сохраняем нестандартную роль из старых данных, чтобы она не пропала */}
+              {form.role && !ROLES.includes(form.role) && (
+                <option value={form.role}>{form.role} (устар.)</option>
+              )}
+            </select>
           </label>
           <label className="field">
             <span>В команде с (дата)</span>
