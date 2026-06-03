@@ -52,4 +52,6 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: cd /opt/vst13 && bash scripts/deploy.sh
+          # git pull делаем здесь, ДО запуска deploy.sh, иначе скрипт обновил бы
+          # сам себя на середине исполнения (bash уже прочитал старую версию).
+          script: cd /opt/vst13 && git fetch origin && git reset --hard origin/master && bash scripts/deploy.sh
