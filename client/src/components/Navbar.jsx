@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { NavLink } from 'react-router-dom';
 import { isMemberAuthed } from '../api';
 
@@ -16,6 +17,7 @@ const cabinetLink = { to: '/cabinet', label: 'Личный кабинет', high
 export default function Navbar() {
   const authed = isMemberAuthed();
   const links = [cabinetLink, ...(authed ? memberLinks : guestLinks)];
+  const [open, setOpen] = useState(false);
 
   return (
     <aside className="sidebar">
@@ -23,12 +25,24 @@ export default function Navbar() {
         <span className="sidebar-logo">⌖</span>
         <span className="sidebar-name">ВСТ13</span>
       </div>
-      <nav className="sidebar-nav">
+
+      <button
+        type="button"
+        className="nav-toggle"
+        aria-label="Меню"
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        {open ? '✕' : '☰'}
+      </button>
+
+      <nav className={open ? 'sidebar-nav open' : 'sidebar-nav'}>
         {links.map((l) => (
           <NavLink
             key={l.to}
             to={l.to}
             end={l.end}
+            onClick={() => setOpen(false)}
             className={({ isActive }) =>
               [
                 isActive ? 'nav-link active' : 'nav-link',

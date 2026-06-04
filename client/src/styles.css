@@ -243,6 +243,23 @@ a {
   border-top: 1px solid var(--border);
 }
 
+/* Кнопка-гамбургер: видна только на мобильном (см. медиазапрос ниже) */
+.nav-toggle {
+  display: none;
+  margin-left: auto;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  line-height: 1;
+  color: var(--accent-2);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  cursor: pointer;
+}
+
 /* ---------- Headings ---------- */
 .page-title {
   font-size: 2rem;
@@ -589,6 +606,23 @@ a {
   right: 50%;
 }
 
+/* На узком экране отряды не складываются в столбец, а прокручиваются вбок —
+   чтобы сохранить ветвящуюся структуру дерева. */
+@media (max-width: 860px) {
+  .org-squads {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 4px 4px 12px;
+    scroll-snap-type: x proximity;
+  }
+  .org-squad {
+    flex: 0 0 auto;
+    scroll-snap-align: center;
+  }
+}
+
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border);
@@ -906,10 +940,19 @@ a {
     margin: 0;
     border: none;
   }
+  /* Гамбургер вместо списка ссылок */
+  .nav-toggle {
+    display: inline-flex;
+  }
   .sidebar-nav {
-    flex-direction: row;
-    flex-wrap: wrap;
-    margin-left: auto;
+    display: none;
+    flex-basis: 100%;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 4px;
+  }
+  .sidebar-nav.open {
+    display: flex;
   }
   .sidebar-foot {
     display: none;
