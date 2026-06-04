@@ -470,12 +470,14 @@ a {
   width: 100%;
 }
 
-/* Компактные узлы дерева: маленький круглый аватар вместо крупного фото */
-.org-tier-nodes .participant-card {
+/* Компактные узлы дерева: маленький круглый аватар вместо крупного фото.
+   Областью служит .org-tree, чтобы стиль покрывал и карточки солдат в .org-children
+   (под командирами отрядов), а не только .org-tier-nodes. */
+.org-tree .participant-card {
   width: 150px;
 }
 
-.org-tier-nodes .participant-photo {
+.org-tree .participant-photo {
   aspect-ratio: auto;
   width: 80px;
   height: 80px;
@@ -484,32 +486,32 @@ a {
   overflow: hidden;
 }
 
-.org-tier-nodes .participant-photo-placeholder {
+.org-tree .participant-photo-placeholder {
   font-size: 1.7rem;
 }
 
-.org-tier-nodes .participant-card-body {
+.org-tree .participant-card-body {
   padding: 10px 12px 12px;
   text-align: center;
 }
 
-.org-tier-nodes .participant-card-body .participant-callsign {
+.org-tree .participant-card-body .participant-callsign {
   font-size: 1rem;
   margin-bottom: 2px;
 }
 
-.org-tier-nodes .participant-card-body .participant-name {
+.org-tree .participant-card-body .participant-name {
   font-size: 0.75rem;
   margin-bottom: 6px;
 }
 
-.org-tier-nodes .participant-role {
+.org-tree .participant-role {
   font-size: 0.68rem;
   padding: 2px 9px;
 }
 
 /* В компактном дереве кнопка-призыв не нужна — вся карточка кликабельна */
-.org-tier-nodes .card-cta {
+.org-tree .card-cta {
   display: none;
 }
 
