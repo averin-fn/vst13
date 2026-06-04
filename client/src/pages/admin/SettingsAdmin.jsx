@@ -7,6 +7,8 @@ export default function SettingsAdmin() {
   const [status, setStatus] = useState('loading');
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState('');
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
 
   useEffect(() => {
     api
@@ -32,6 +34,26 @@ export default function SettingsAdmin() {
       setSaved(true);
     } catch (err) {
       setError(err.message);
+    }
+  };
+
+  const exportDb = async () => {
+    setExporting(true);
+    setExportError('');
+    try {
+      const { blob, filename } = await api.exportDb();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setExportError(err.message);
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -67,6 +89,26 @@ export default function SettingsAdmin() {
           </div>
         </form>
       )}
+
+      <div className="card admin-form">
+        <h3 className="admin-form-title">Резервная копия базы</h3>
+        <p className="file-hint">
+          Скачать всю базу данных (SQLite): участники, мероприятия, обратная связь,
+          настройки, правила, чат и аккаунты. Файл можно хранить как бэкап или
+          восстановить на сервере.
+        </p>
+        {exportError && <p className="notice notice-error">{exportError}</p>}
+        <div className="form-actions">
+          <button
+            type="button"
+            className="btn btn-primary"
+            onClick={exportDb}
+            disabled={exporting}
+          >
+            {exporting ? 'Экспорт…' : '⬇ Экспортировать базу'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

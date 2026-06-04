@@ -1,3 +1,4 @@
+const path = require('path');
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const db = require('../db');
@@ -264,6 +265,19 @@ router.post('/upload', (req, res) => {
     if (err) return res.status(400).json({ error: err.message });
     if (!req.file) return res.status(400).json({ error: 'Файл не получен' });
     res.status(201).json({ url: `/uploads/${req.file.filename}` });
+  });
+});
+
+/* ---------------- Экспорт базы (резервная копия) ---------------- */
+router.get('/export', (req, res) => {
+  // Вливаем WAL в основной файл, чтобы экспорт содержал самые свежие данные.
+  try { db.prepare('PRAGMA wal_checkpoint(TRUNCATE)').get(); } catch { /* не критично */ }
+  const dbPath = path.join(__dirname, '..', 'data.db');
+  const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-');
+  res.download(dbPath, `vst13-backup-${stamp}.db`, (err) => {
+    if (err && !res.headersSent) {
+      res.status(500).json({ error: 'Не удалось сформировать экспорт' });
+    }
   });
 });
 

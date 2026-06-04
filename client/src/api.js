@@ -108,6 +108,23 @@ export const api = {
     return request('/admin/upload', { method: 'POST', auth: true, body: fd });
   },
 
+  // ---- админ: экспорт базы (скачивание SQLite-файла) ----
+  exportDb: async () => {
+    const token = getToken();
+    const res = await fetch(BASE + '/admin/export', {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+    if (res.status === 401) {
+      clearToken();
+      throw new Error('Требуется авторизация администратора');
+    }
+    if (!res.ok) throw new Error('Не удалось экспортировать базу');
+    const blob = await res.blob();
+    const cd = res.headers.get('Content-Disposition') || '';
+    const m = /filename="?([^"]+)"?/.exec(cd);
+    return { blob, filename: m ? m[1] : 'vst13-backup.db' };
+  },
+
   // ---- личный кабинет участника ----
   memberLogin: (username, password) =>
     request('/member/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
