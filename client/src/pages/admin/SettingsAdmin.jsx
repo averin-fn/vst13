@@ -10,6 +10,12 @@ export default function SettingsAdmin() {
   const [exporting, setExporting] = useState(false);
   const [exportError, setExportError] = useState('');
 
+  // Смена пароля администратора
+  const [pw, setPw] = useState({ current: '', next: '', repeat: '' });
+  const [pwBusy, setPwBusy] = useState(false);
+  const [pwSaved, setPwSaved] = useState(false);
+  const [pwError, setPwError] = useState('');
+
   useEffect(() => {
     api
       .getSettings()
@@ -54,6 +60,36 @@ export default function SettingsAdmin() {
       setExportError(err.message);
     } finally {
       setExporting(false);
+    }
+  };
+
+  const pwUpdate = (field) => (e) => {
+    setPw({ ...pw, [field]: e.target.value });
+    setPwSaved(false);
+    setPwError('');
+  };
+
+  const changePassword = async (e) => {
+    e.preventDefault();
+    setPwSaved(false);
+    setPwError('');
+    if (pw.next !== pw.repeat) {
+      setPwError('Новый пароль и подтверждение не совпадают');
+      return;
+    }
+    if (pw.next.length < 8) {
+      setPwError('Новый пароль слишком короткий (минимум 8 символов)');
+      return;
+    }
+    setPwBusy(true);
+    try {
+      await api.changeAdminPassword(pw.current, pw.next);
+      setPw({ current: '', next: '', repeat: '' });
+      setPwSaved(true);
+    } catch (err) {
+      setPwError(err.message);
+    } finally {
+      setPwBusy(false);
     }
   };
 
@@ -109,6 +145,50 @@ export default function SettingsAdmin() {
           </button>
         </div>
       </div>
+
+      <form className="card admin-form" onSubmit={changePassword} style={{ maxWidth: 480 }}>
+        <h3 className="admin-form-title">Смена пароля администратора</h3>
+        <label className="field">
+          <span>Текущий пароль</span>
+          <input
+            type="password"
+            value={pw.current}
+            onChange={pwUpdate('current')}
+            required
+            autoComplete="current-password"
+          />
+        </label>
+        <label className="field">
+          <span>Новый пароль</span>
+          <input
+            type="password"
+            value={pw.next}
+            onChange={pwUpdate('next')}
+            required
+            autoComplete="new-password"
+          />
+          <span className="file-hint">Минимум 8 символов.</span>
+        </label>
+        <label className="field">
+          <span>Подтвердите новый пароль</span>
+          <input
+            type="password"
+            value={pw.repeat}
+            onChange={pwUpdate('repeat')}
+            required
+            autoComplete="new-password"
+          />
+        </label>
+
+        {pwError && <p className="notice notice-error">{pwError}</p>}
+        {pwSaved && <p className="notice notice-success">Пароль изменён.</p>}
+
+        <div className="form-actions">
+          <button type="submit" className="btn btn-primary" disabled={pwBusy}>
+            {pwBusy ? 'Сохранение…' : 'Сменить пароль'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 }

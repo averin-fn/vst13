@@ -101,6 +101,14 @@ export const api = {
   updateSettings: (data) =>
     request('/admin/settings', { method: 'PUT', auth: true, body: JSON.stringify(data) }),
 
+  // ---- админ: смена пароля ----
+  changeAdminPassword: (currentPassword, newPassword) =>
+    request('/admin/change-password', {
+      method: 'POST',
+      auth: true,
+      body: JSON.stringify({ currentPassword, newPassword })
+    }),
+
   // ---- админ: загрузка файлов ----
   upload: (file) => {
     const fd = new FormData();
