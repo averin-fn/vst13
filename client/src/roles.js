@@ -6,6 +6,7 @@ export const TOP_ROLES = ['Командир', 'Замполит'];
 export const SMM_ROLE = 'SMM-специалист';
 export const SQUADS = [1, 2, 3];
 export const SOLDIER_ROLE = 'Солдат';
+export const RESERVE_ROLE = 'Запас';
 
 export const squadCommanderRole = (n) => `Командир ${n} отряда`;
 
@@ -14,5 +15,6 @@ export const ROLES = [
   ...TOP_ROLES,
   SMM_ROLE,
   ...SQUADS.map(squadCommanderRole),
-  SOLDIER_ROLE
+  SOLDIER_ROLE,
+  RESERVE_ROLE
 ];

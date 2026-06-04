@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../api';
-import { TOP_ROLES, SMM_ROLE, SQUADS, SOLDIER_ROLE, squadCommanderRole } from '../roles';
+import {
+  TOP_ROLES,
+  SMM_ROLE,
+  SQUADS,
+  SOLDIER_ROLE,
+  RESERVE_ROLE,
+  squadCommanderRole
+} from '../roles';
 import ParticipantCard from '../components/ParticipantCard.jsx';
 
 // Прокручиваемое/перетаскиваемое «поле» для дерева: тащим мышью (drag-to-pan),
@@ -89,9 +96,13 @@ function buildTree(participants) {
     return { n, commanderRole, commanders, soldiers };
   }).filter((s) => s.commanders.length > 0 || s.soldiers.length > 0);
 
+  // Запас — отдельным рядом в самом низу дерева.
+  const reserve = participants.filter((p) => p.role === RESERVE_ROLE);
+  reserve.forEach((p) => assigned.add(p.id));
+
   const others = participants.filter((p) => !assigned.has(p.id));
 
-  return { top, smm, squads, others };
+  return { top, smm, squads, others, reserve };
 }
 
 function Group({ role, members, variant }) {
@@ -121,7 +132,7 @@ export default function Participants() {
       .catch(() => setStatus('error'));
   }, []);
 
-  const { top, smm, squads, others } = buildTree(participants);
+  const { top, smm, squads, others, reserve } = buildTree(participants);
 
   return (
     <div className="page">
@@ -186,6 +197,17 @@ export default function Participants() {
                 <Group role="Без отряда / прочие" members={others} />
               </div>
             </>
+          )}
+
+          {reserve.length > 0 && (
+            <div className="org-reserve">
+              <span className="org-tier-label org-tier-label--reserve">Запас</span>
+              <div className="org-reserve-row">
+                {reserve.map((p) => (
+                  <ParticipantCard key={p.id} participant={p} />
+                ))}
+              </div>
+            </div>
           )}
         </div>
         </OrgViewport>
