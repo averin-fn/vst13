@@ -26,6 +26,7 @@ export default function CabinetChat() {
   const scrollRef = useRef(null);
   const lastIdRef = useRef(0);
   const channelRef = useRef(channel);
+  const inputRef = useRef(null);
 
   // Подгружаем новые сообщения текущего канала
   const refresh = async () => {
@@ -80,14 +81,18 @@ export default function CabinetChat() {
     if (!text || sending) return;
     setSending(true);
     setError('');
+    // Сразу очищаем поле — можно продолжать печатать, не дожидаясь ответа.
+    setDraft('');
     try {
       await api.sendChatMessage(channel, text);
-      setDraft('');
       await refresh();
     } catch (err) {
       setError(err.message);
+      setDraft(text); // вернуть текст при ошибке отправки
     } finally {
       setSending(false);
+      // Возвращаем фокус в поле, чтобы продолжить писать без клика.
+      inputRef.current?.focus();
     }
   };
 
@@ -132,12 +137,13 @@ export default function CabinetChat() {
 
           <form className="chat-form" onSubmit={send}>
             <input
+              ref={inputRef}
               type="text"
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               placeholder={`Сообщение в #${CHANNELS.find((c) => c.id === channel)?.label || channel}…`}
               maxLength={1000}
-              disabled={sending}
+              autoFocus
             />
             <button type="submit" className="btn btn-primary" disabled={sending || !draft.trim()}>
               {sending ? '…' : 'Отправить'}
