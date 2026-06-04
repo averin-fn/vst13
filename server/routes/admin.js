@@ -281,4 +281,21 @@ router.get('/export', (req, res) => {
   });
 });
 
+/* ---------------- Смена пароля администратора ---------------- */
+// Меняет пароль в таблице admins. Требует текущий пароль (защита от угона токена).
+router.post('/change-password', (req, res) => {
+  const current = String(req.body.currentPassword || '');
+  const next = String(req.body.newPassword || '');
+  if (!current || !next) return res.status(400).json({ error: 'Заполните текущий и новый пароль' });
+  if (next.length < 8) return res.status(400).json({ error: 'Новый пароль слишком короткий (минимум 8 символов)' });
+
+  const username = req.admin && req.admin.username;
+  const row = db.prepare('SELECT id, password_hash FROM admins WHERE username = ?').get(username);
+  if (!row || !bcrypt.compareSync(current, row.password_hash)) {
+    return res.status(401).json({ error: 'Неверный текущий пароль' });
+  }
+  db.prepare('UPDATE admins SET password_hash = ? WHERE id = ?').run(bcrypt.hashSync(next, 10), row.id);
+  res.json({ ok: true });
+});
+
 module.exports = router;

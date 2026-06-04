@@ -8,9 +8,15 @@ client/dist/
 *.log
 npm-debug.log*
 
-# SQLite runtime (журналы WAL)
+# SQLite база данных — НЕ хранить в репозитории (персональные данные, хэши паролей).
+# Живёт только на сервере; локально подставляется бэкапом.
+server/data.db
 *.db-wal
 *.db-shm
+
+# Локальные бэкапы БД
+*.local-backup
+server/backups/
 
 # Загружаемый контент в server/uploads:
 # картинки храним в репозитории, 3D-модели игнорируем (runtime)
