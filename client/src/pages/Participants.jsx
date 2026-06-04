@@ -1,7 +1,66 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '../api';
 import { TOP_ROLES, SQUADS, SOLDIER_ROLE, squadCommanderRole } from '../roles';
 import ParticipantCard from '../components/ParticipantCard.jsx';
+
+// Прокручиваемое/перетаскиваемое «поле» для дерева: тащим мышью (drag-to-pan),
+// на тач-устройствах работает обычная прокрутка. Клик по карточке не срабатывает,
+// если это было перетаскивание.
+function OrgViewport({ children }) {
+  const ref = useRef(null);
+  const st = useRef({ down: false, moved: false, x: 0, y: 0, left: 0, top: 0 });
+
+  // При открытии центрируем поле по горизонтали — чтобы сразу было видно
+  // корень (командование), а не пустой угол.
+  useEffect(() => {
+    const el = ref.current;
+    if (el) el.scrollLeft = Math.max(0, (el.scrollWidth - el.clientWidth) / 2);
+  }, []);
+
+  const onMouseDown = (e) => {
+    const el = ref.current;
+    st.current = {
+      down: true, moved: false,
+      x: e.clientX, y: e.clientY,
+      left: el.scrollLeft, top: el.scrollTop
+    };
+    el.classList.add('grabbing');
+  };
+  const onMouseMove = (e) => {
+    const s = st.current;
+    if (!s.down) return;
+    const dx = e.clientX - s.x;
+    const dy = e.clientY - s.y;
+    if (Math.abs(dx) > 5 || Math.abs(dy) > 5) s.moved = true;
+    ref.current.scrollLeft = s.left - dx;
+    ref.current.scrollTop = s.top - dy;
+  };
+  const end = () => {
+    st.current.down = false;
+    if (ref.current) ref.current.classList.remove('grabbing');
+  };
+  const onClickCapture = (e) => {
+    if (st.current.moved) {
+      e.preventDefault();
+      e.stopPropagation();
+      st.current.moved = false;
+    }
+  };
+
+  return (
+    <div
+      ref={ref}
+      className="org-viewport"
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={end}
+      onMouseLeave={end}
+      onClickCapture={onClickCapture}
+    >
+      {children}
+    </div>
+  );
+}
 
 // Раскладываем участников по структуре дерева:
 //  - top: командование (Командир, Замполит)
@@ -64,7 +123,7 @@ export default function Participants() {
     <div className="page">
       <h1 className="page-title">Участники</h1>
       <p className="page-subtitle">
-        Структура команды по отрядам. Выберите бойца, чтобы увидеть досье и 3D-модель.
+        Структура команды по отрядам. Тяните поле, чтобы осмотреться, и выберите бойца для досье.
       </p>
 
       {status === 'loading' && <p className="notice">Загрузка…</p>}
@@ -76,6 +135,7 @@ export default function Participants() {
       )}
 
       {status === 'ready' && participants.length > 0 && (
+        <OrgViewport>
         <div className="org-tree">
           {top.length > 0 && (
             <div className="org-level">
@@ -120,6 +180,7 @@ export default function Participants() {
             </>
           )}
         </div>
+        </OrgViewport>
       )}
     </div>
   );

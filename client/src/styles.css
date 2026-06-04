@@ -426,6 +426,29 @@ a {
 }
 
 /* ---------- Дерево команды (страница «Участники») ---------- */
+/* «Поле»: большое прокручиваемое/перетаскиваемое окно для дерева */
+.org-viewport {
+  height: 72vh;
+  min-height: 440px;
+  overflow: auto;
+  cursor: grab;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(circle, rgba(170, 184, 134, 0.06) 1px, transparent 1.4px) 0 0 / 24px 24px,
+    var(--bg-elev);
+  overscroll-behavior: contain;
+}
+.org-viewport.grabbing {
+  cursor: grabbing;
+}
+.org-viewport .org-tree {
+  width: max-content;
+  min-width: 100%;
+  padding: 36px 48px;
+  margin: 0 auto;
+}
+
 .org-tree {
   display: flex;
   flex-direction: column;
@@ -453,12 +476,13 @@ a {
   font-family: var(--font-head);
   text-transform: uppercase;
   letter-spacing: 1px;
-  font-size: 0.85rem;
+  font-size: 1.15rem;
+  font-weight: 800;
   color: var(--accent-2);
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 999px;
-  padding: 5px 16px;
+  padding: 8px 20px;
   margin-bottom: 16px;
 }
 
@@ -523,20 +547,26 @@ a {
   margin: 4px 0 18px;
 }
 
-/* Ряд отрядов: каждый отряд — отдельная колонка (командир + его солдаты) */
+/* Ряд отрядов: отряды строго горизонтально (поле прокручивается вбок) */
 .org-squads {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   justify-content: center;
   align-items: flex-start;
-  gap: 24px 32px;
-  width: 100%;
+  gap: 28px;
 }
 
+/* Каждый отряд — отдельная панель, чтобы визуально не сливались */
 .org-squad {
   display: flex;
   flex-direction: column;
   align-items: center;
+  background: rgba(12, 14, 9, 0.55);
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--accent-2);
+  border-radius: 14px;
+  padding: 16px 20px 22px;
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.28);
 }
 
 /* Солдаты отряда под командиром — с ветвящимися соединителями (стрелки вниз) */
@@ -608,21 +638,31 @@ a {
   right: 50%;
 }
 
-/* На узком экране отряды не складываются в столбец, а прокручиваются вбок —
-   чтобы сохранить ветвящуюся структуру дерева. */
-@media (max-width: 860px) {
-  .org-squads {
-    flex-wrap: nowrap;
-    justify-content: flex-start;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 4px 4px 12px;
-    scroll-snap-type: x proximity;
-  }
-  .org-squad {
-    flex: 0 0 auto;
-    scroll-snap-align: center;
-  }
+/* Карточки солдат — заметно меньше карточек командиров */
+.org-child .participant-card {
+  width: 118px;
+}
+.org-child .participant-photo {
+  width: 54px;
+  height: 54px;
+  margin-top: 10px;
+}
+.org-child .participant-photo-placeholder {
+  font-size: 1.2rem;
+}
+.org-child .participant-card-body {
+  padding: 8px 8px 10px;
+}
+.org-child .participant-card-body .participant-callsign {
+  font-size: 0.82rem;
+}
+.org-child .participant-card-body .participant-name {
+  font-size: 0.66rem;
+  margin-bottom: 4px;
+}
+.org-child .participant-role {
+  font-size: 0.58rem;
+  padding: 1px 7px;
 }
 
 .card {
