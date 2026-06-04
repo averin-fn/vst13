@@ -492,6 +492,35 @@ a {
   align-items: center;
 }
 
+/* Верхний горизонт: командование по центру, SMM-специалист — в стороне справа */
+.org-level--top {
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 0;
+}
+.org-command {
+  display: flex;
+  gap: 36px;
+  justify-content: center;
+}
+.org-smm {
+  margin-left: 140px; /* «на отдалении» от командиров */
+}
+/* Окно SMM-специалиста выделено другим цветом */
+.org-group--smm .org-tier-label {
+  color: #7fc4e8;
+  border-color: rgba(127, 196, 232, 0.55);
+  background: rgba(127, 196, 232, 0.12);
+}
+.org-group--smm .participant-card {
+  border-color: rgba(127, 196, 232, 0.6);
+  box-shadow: 0 0 0 1px rgba(127, 196, 232, 0.45);
+  background: rgba(127, 196, 232, 0.08);
+}
+.org-group--smm .participant-callsign {
+  color: #7fc4e8;
+}
+
 .org-tier-label {
   font-family: var(--font-head);
   text-transform: uppercase;

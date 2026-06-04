@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { api } from '../api';
-import { TOP_ROLES, SQUADS, SOLDIER_ROLE, squadCommanderRole } from '../roles';
+import { TOP_ROLES, SMM_ROLE, SQUADS, SOLDIER_ROLE, squadCommanderRole } from '../roles';
 import ParticipantCard from '../components/ParticipantCard.jsx';
 
 // Прокручиваемое/перетаскиваемое «поле» для дерева: тащим мышью (drag-to-pan),
@@ -75,6 +75,10 @@ function buildTree(participants) {
     return { role, members };
   }).filter((g) => g.members.length > 0);
 
+  // SMM-специалист — на том же верхнем горизонте, но в стороне (справа).
+  const smm = participants.filter((p) => p.role === SMM_ROLE);
+  smm.forEach((p) => assigned.add(p.id));
+
   const squads = SQUADS.map((n) => {
     const commanderRole = squadCommanderRole(n);
     const commanders = participants.filter((p) => p.role === commanderRole);
@@ -87,12 +91,12 @@ function buildTree(participants) {
 
   const others = participants.filter((p) => !assigned.has(p.id));
 
-  return { top, squads, others };
+  return { top, smm, squads, others };
 }
 
-function Group({ role, members }) {
+function Group({ role, members, variant }) {
   return (
-    <div className="org-group">
+    <div className={`org-group${variant ? ` org-group--${variant}` : ''}`}>
       <span className="org-tier-label">{role}</span>
       <div className="org-tier-nodes">
         {members.map((p) => (
@@ -117,7 +121,7 @@ export default function Participants() {
       .catch(() => setStatus('error'));
   }, []);
 
-  const { top, squads, others } = buildTree(participants);
+  const { top, smm, squads, others } = buildTree(participants);
 
   return (
     <div className="page">
@@ -134,11 +138,18 @@ export default function Participants() {
       {status === 'ready' && participants.length > 0 && (
         <OrgViewport>
         <div className="org-tree">
-          {top.length > 0 && (
-            <div className="org-level">
-              {top.map((g) => (
-                <Group key={g.role} role={g.role} members={g.members} />
-              ))}
+          {(top.length > 0 || smm.length > 0) && (
+            <div className="org-level org-level--top">
+              <div className="org-command">
+                {top.map((g) => (
+                  <Group key={g.role} role={g.role} members={g.members} />
+                ))}
+              </div>
+              {smm.length > 0 && (
+                <div className="org-smm">
+                  <Group role={SMM_ROLE} members={smm} variant="smm" />
+                </div>
+              )}
             </div>
           )}
 
