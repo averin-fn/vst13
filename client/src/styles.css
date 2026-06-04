@@ -428,10 +428,18 @@ a {
 /* ---------- Дерево команды (страница «Участники») ---------- */
 /* «Поле»: большое прокручиваемое/перетаскиваемое окно для дерева */
 .org-viewport {
-  height: 84vh;
-  min-height: 540px;
-  /* шире влево/вправо — выходим за внутренние отступы контента */
-  margin: 4px -40px 0;
+  height: 88vh;
+  min-height: 600px;
+  /* Выходим из центральной колонки (max-width контента) на всю ширину
+     основной области: от бокового меню (248px) до правого края экрана,
+     с небольшими полями по 16px. Блок центрируется по центру контента,
+     который совпадает с центром основной области. */
+  --sidebar-w: 248px;
+  --org-gap: 16px;
+  width: calc(100vw - var(--sidebar-w) - var(--org-gap) * 2);
+  margin-left: calc(50% - (100vw - var(--sidebar-w) - var(--org-gap) * 2) / 2);
+  margin-top: -12px;
+  margin-bottom: 0;
   overflow: auto;
   cursor: grab;
   border: 1px solid var(--border);
@@ -443,9 +451,12 @@ a {
 }
 @media (max-width: 860px) {
   .org-viewport {
+    /* На мобильном меню сверху — растягиваем во всю ширину контента */
+    width: auto;
     margin-left: -20px;
     margin-right: -20px;
     height: 80vh;
+    min-height: 440px;
   }
 }
 .org-viewport.grabbing {
