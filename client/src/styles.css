@@ -428,8 +428,10 @@ a {
 /* ---------- Дерево команды (страница «Участники») ---------- */
 /* «Поле»: большое прокручиваемое/перетаскиваемое окно для дерева */
 .org-viewport {
-  height: 72vh;
-  min-height: 440px;
+  height: 84vh;
+  min-height: 540px;
+  /* шире влево/вправо — выходим за внутренние отступы контента */
+  margin: 4px -40px 0;
   overflow: auto;
   cursor: grab;
   border: 1px solid var(--border);
@@ -438,6 +440,13 @@ a {
     radial-gradient(circle, rgba(170, 184, 134, 0.06) 1px, transparent 1.4px) 0 0 / 24px 24px,
     var(--bg-elev);
   overscroll-behavior: contain;
+}
+@media (max-width: 860px) {
+  .org-viewport {
+    margin-left: -20px;
+    margin-right: -20px;
+    height: 80vh;
+  }
 }
 .org-viewport.grabbing {
   cursor: grabbing;

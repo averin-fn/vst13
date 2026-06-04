@@ -122,9 +122,6 @@ export default function Participants() {
   return (
     <div className="page">
       <h1 className="page-title">Участники</h1>
-      <p className="page-subtitle">
-        Структура команды по отрядам. Тяните поле, чтобы осмотреться, и выберите бойца для досье.
-      </p>
 
       {status === 'loading' && <p className="notice">Загрузка…</p>}
       {status === 'error' && (
