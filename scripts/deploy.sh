@@ -11,11 +11,19 @@ BACKUP_KEEP_DAYS="${BACKUP_KEEP_DAYS:-30}"
 
 cd "$APP_DIR"
 
-# 1. Бэкап SQLite-базы (если уже создана).
+# 1. Бэкап SQLite-базы + сохранение «живой» базы для восстановления после reset.
+# data.db версионируется, поэтому git reset --hard затёр бы серверные данные.
+# Сохраняем data.db вместе с WAL/SHM (согласованный комплект) и возвращаем после
+# reset — чтобы правки, сделанные через админку на сервере, не терялись.
+KEEP_DIR=""
 if [ -f server/data.db ]; then
   mkdir -p "$BACKUP_DIR"
   cp server/data.db "$BACKUP_DIR/data-$(date +%Y%m%dT%H%M%S).db"
   find "$BACKUP_DIR" -name 'data-*.db' -mtime "+$BACKUP_KEEP_DAYS" -delete
+  KEEP_DIR="$(mktemp -d)"
+  cp server/data.db "$KEEP_DIR/" 2>/dev/null || true
+  cp server/data.db-wal "$KEEP_DIR/" 2>/dev/null || true
+  cp server/data.db-shm "$KEEP_DIR/" 2>/dev/null || true
   echo "==> Бэкап БД сделан"
 fi
 
@@ -24,10 +32,14 @@ echo "==> git pull"
 git fetch origin
 git reset --hard origin/master
 
-# 2.1 Чистим WAL/SHM SQLite: они в .gitignore, поэтому reset --hard их не трогает,
-# и старый журнал «перекрывал» бы только что развёрнутую data.db. Удаляем, чтобы
-# источником истины была закоммиченная база (бэкап сделан выше).
-rm -f server/data.db-wal server/data.db-shm
+# 2.1 Возвращаем «живую» базу поверх версии из репозитория.
+if [ -n "$KEEP_DIR" ]; then
+  cp "$KEEP_DIR/data.db" server/data.db 2>/dev/null || true
+  cp "$KEEP_DIR/data.db-wal" server/data.db-wal 2>/dev/null || true
+  cp "$KEEP_DIR/data.db-shm" server/data.db-shm 2>/dev/null || true
+  rm -rf "$KEEP_DIR"
+  echo "==> Серверная БД сохранена"
+fi
 
 # 3. Зависимости сервера.
 # Клиент (client/dist) собирается в GitHub Actions и копируется по scp,

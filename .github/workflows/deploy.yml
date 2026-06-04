@@ -54,4 +54,17 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           # git pull делаем здесь, ДО запуска deploy.sh, иначе скрипт обновил бы
           # сам себя на середине исполнения (bash уже прочитал старую версию).
-          script: cd /opt/vst13 && git fetch origin && git reset --hard origin/master && bash scripts/deploy.sh
+          # Перед reset сохраняем «живую» БД (data.db + WAL/SHM) и возвращаем после,
+          # чтобы reset --hard не затёр серверные данные версией из репозитория.
+          script: |
+            cd /opt/vst13
+            KEEP="$(mktemp -d)"
+            cp server/data.db "$KEEP/" 2>/dev/null || true
+            cp server/data.db-wal "$KEEP/" 2>/dev/null || true
+            cp server/data.db-shm "$KEEP/" 2>/dev/null || true
+            git fetch origin && git reset --hard origin/master
+            cp "$KEEP/data.db" server/data.db 2>/dev/null || true
+            cp "$KEEP/data.db-wal" server/data.db-wal 2>/dev/null || true
+            cp "$KEEP/data.db-shm" server/data.db-shm 2>/dev/null || true
+            rm -rf "$KEEP"
+            bash scripts/deploy.sh
