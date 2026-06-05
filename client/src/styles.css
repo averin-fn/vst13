@@ -29,6 +29,8 @@ body {
   color: var(--text);
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  /* Страховка: ничего не должно вылезать за ширину экрана */
+  overflow-x: hidden;
   /* Мягкая камуфляжная «лиственная» фактура фона (ATACS FG) */
   background-color: var(--bg);
   background-image:
@@ -2019,9 +2021,11 @@ a {
   display: flex;
   gap: 10px;
   margin-top: 14px;
+  max-width: 100%;
 }
 .chat-form input {
   flex: 1;
+  min-width: 0; /* чтобы поле сжималось и не выталкивало кнопку за экран */
   background: var(--bg-input);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -2190,6 +2194,16 @@ a {
     display: flex;
     flex-direction: column;
     gap: 12px;
+    min-width: 0;
+    max-width: 100%;
+  }
+  /* min-width:0 обязателен, иначе флекс-элементы не сжимаются ниже контента
+     и вылезают за экран (каналы в ряд, длинная лента) */
+  .chat-channels,
+  .chat-main,
+  .chat {
+    min-width: 0;
+    max-width: 100%;
   }
   .chat-channels {
     flex-direction: row;
@@ -2206,6 +2220,22 @@ a {
   }
   .chat-msg {
     max-width: 88%;
+  }
+  /* компактнее кнопка отправки — полю ввода больше места */
+  .chat-form .btn {
+    padding: 11px 16px;
+  }
+}
+
+/* Установленное приложение: учитываем «безопасные зоны» (вырез, домашняя полоса) */
+@media (display-mode: standalone) {
+  .content {
+    padding-left: max(20px, env(safe-area-inset-left));
+    padding-right: max(20px, env(safe-area-inset-right));
+    padding-bottom: max(28px, env(safe-area-inset-bottom));
+  }
+  .sidebar {
+    padding-top: max(14px, env(safe-area-inset-top));
   }
 }
 
