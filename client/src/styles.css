@@ -2040,8 +2040,34 @@ a {
   font-weight: 700;
 }
 
-.chat-push-btn {
+.chat-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
   margin: 0 0 16px;
+}
+
+.chat-install-btn {
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: var(--accent-grad);
+  color: #15170f;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.chat-install-btn:hover {
+  filter: brightness(1.08);
+}
+
+.chat-ios-hint {
+  margin: -8px 0 16px;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+.chat-push-btn {
   padding: 8px 14px;
   border-radius: 999px;
   border: 1px solid var(--border);

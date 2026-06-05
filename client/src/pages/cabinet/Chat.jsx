@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { api, getMemberToken } from '../../api';
 import { pushStatus, enablePush, disablePush } from '../../push';
+import { canInstall, isStandalone, isIOS, promptInstall, subscribeInstall } from '../../installPrompt';
 
 const CHANNELS = [
   { id: 'general', label: 'Общий' },
@@ -29,6 +30,8 @@ export default function CabinetChat() {
   const [pendingAtt, setPendingAtt] = useState(null); // { url, type, name }
   const [attaching, setAttaching] = useState(false);
   const [push, setPush] = useState('off'); // unsupported|denied|on|off|busy
+  const [installable, setInstallable] = useState(false);
+  const [iosHint, setIosHint] = useState(false);
 
   const fileInputRef = useRef(null);
   const scrollRef = useRef(null);
@@ -201,6 +204,24 @@ export default function CabinetChat() {
     pushStatus().then(setPush);
   }, []);
 
+  // Кнопка установки приложения (PWA)
+  useEffect(() => {
+    const update = () => setInstallable(canInstall());
+    update();
+    return subscribeInstall(update);
+  }, []);
+
+  const showInstall = !isStandalone() && (installable || isIOS());
+
+  const onInstall = async () => {
+    if (canInstall()) {
+      await promptInstall();
+      setInstallable(canInstall());
+    } else if (isIOS()) {
+      setIosHint((v) => !v);
+    }
+  };
+
   const togglePush = async () => {
     if (push === 'unsupported' || push === 'denied' || push === 'busy') return;
     setPush('busy');
@@ -231,19 +252,32 @@ export default function CabinetChat() {
         )}
       </p>
 
-      {push !== 'unsupported' && (
-        <button
-          type="button"
-          className={`chat-push-btn ${push === 'on' ? 'on' : ''}`}
-          onClick={togglePush}
-          disabled={push === 'denied' || push === 'busy'}
-          title="Уведомления о новых сообщениях"
-        >
-          {push === 'on' && '🔔 Уведомления включены'}
-          {push === 'off' && '🔕 Включить уведомления'}
-          {push === 'busy' && '…'}
-          {push === 'denied' && '🔕 Уведомления заблокированы в браузере'}
-        </button>
+      <div className="chat-actions">
+        {showInstall && (
+          <button type="button" className="chat-install-btn" onClick={onInstall}>
+            ⬇ Установить приложение
+          </button>
+        )}
+        {push !== 'unsupported' && (
+          <button
+            type="button"
+            className={`chat-push-btn ${push === 'on' ? 'on' : ''}`}
+            onClick={togglePush}
+            disabled={push === 'denied' || push === 'busy'}
+            title="Уведомления о новых сообщениях"
+          >
+            {push === 'on' && '🔔 Уведомления включены'}
+            {push === 'off' && '🔕 Включить уведомления'}
+            {push === 'busy' && '…'}
+            {push === 'denied' && '🔕 Уведомления заблокированы в браузере'}
+          </button>
+        )}
+      </div>
+
+      {iosHint && (
+        <p className="chat-ios-hint">
+          На iPhone: нажмите «Поделиться» <b>⎋</b> внизу браузера → «На экран «Домой»».
+        </p>
       )}
 
       <div className="chat-layout">
