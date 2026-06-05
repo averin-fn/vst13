@@ -1103,6 +1103,16 @@ a {
   .detail {
     grid-template-columns: 1fr;
   }
+  /* На телефоне: инфо → фото → 3D-модель (модель уезжает под фото) */
+  .detail-info {
+    order: 1;
+  }
+  .detail-photo {
+    order: 2;
+  }
+  .detail-model {
+    order: 3;
+  }
   .event-card {
     flex-direction: column;
   }
