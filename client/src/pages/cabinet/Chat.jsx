@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
 import { api, getMemberToken } from '../../api';
+import { pushStatus, enablePush, disablePush } from '../../push';
 
 const CHANNELS = [
   { id: 'general', label: 'Общий' },
@@ -27,6 +28,7 @@ export default function CabinetChat() {
   const [typing, setTyping] = useState('');
   const [pendingAtt, setPendingAtt] = useState(null); // { url, type, name }
   const [attaching, setAttaching] = useState(false);
+  const [push, setPush] = useState('off'); // unsupported|denied|on|off|busy
 
   const fileInputRef = useRef(null);
   const scrollRef = useRef(null);
@@ -194,6 +196,29 @@ export default function CabinetChat() {
     }
   };
 
+  // Статус уведомлений при открытии
+  useEffect(() => {
+    pushStatus().then(setPush);
+  }, []);
+
+  const togglePush = async () => {
+    if (push === 'unsupported' || push === 'denied' || push === 'busy') return;
+    setPush('busy');
+    try {
+      if (await pushStatusIsOn()) {
+        await disablePush();
+        setPush('off');
+      } else {
+        await enablePush();
+        setPush('on');
+      }
+    } catch (err) {
+      setError(err.message || 'Не удалось включить уведомления');
+      setPush(await pushStatus());
+    }
+  };
+  const pushStatusIsOn = async () => (await pushStatus()) === 'on';
+
   const onlineCount = online.length;
 
   return (
@@ -205,6 +230,21 @@ export default function CabinetChat() {
           <span className="chat-online"> • {onlineCount} в сети</span>
         )}
       </p>
+
+      {push !== 'unsupported' && (
+        <button
+          type="button"
+          className={`chat-push-btn ${push === 'on' ? 'on' : ''}`}
+          onClick={togglePush}
+          disabled={push === 'denied' || push === 'busy'}
+          title="Уведомления о новых сообщениях"
+        >
+          {push === 'on' && '🔔 Уведомления включены'}
+          {push === 'off' && '🔕 Включить уведомления'}
+          {push === 'busy' && '…'}
+          {push === 'denied' && '🔕 Уведомления заблокированы в браузере'}
+        </button>
+      )}
 
       <div className="chat-layout">
         <div className="chat-channels">

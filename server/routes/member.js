@@ -150,7 +150,22 @@ router.post('/chat', requireMember, (req, res) => {
     )
     .get(id);
   // eslint-disable-next-line global-require
-  require('../realtime').emitMessage(row);
+  const realtime = require('../realtime');
+  realtime.emitMessage(row);
+
+  // Пуш — всем, кроме автора и тех, кто сейчас онлайн в чате
+  // eslint-disable-next-line global-require
+  const push = require('../push');
+  const exclude = realtime.onlineIds();
+  exclude.add(req.member.participantId);
+  const chLabel = { general: 'Общий', tactics: 'Тактика', gear: 'Снаряжение', games: 'Игры' }[channel] || channel;
+  const body = message || (att.type === 'image' ? '📷 Фото' : '📎 Файл');
+  push.sendToParticipants(exclude, {
+    title: `«${row.callsign}» в #${chLabel}`,
+    body: body.slice(0, 120),
+    url: '/cabinet/chat',
+    tag: `chat-${channel}`
+  }).catch(() => {});
 
   res.status(201).json({ id });
 });
@@ -183,6 +198,24 @@ router.post('/chat/mark-read', requireMember, (req, res) => {
        last_read_id = MAX(last_read_id, excluded.last_read_id),
        updated_at = excluded.updated_at`
   ).run(req.member.participantId, channel, lastId, new Date().toISOString());
+  res.json({ ok: true });
+});
+
+/* ---------- Пуш-уведомления ---------- */
+router.get('/push/key', requireMember, (req, res) => {
+  // eslint-disable-next-line global-require
+  res.json({ key: require('../push').publicKey() });
+});
+
+router.post('/push/subscribe', requireMember, (req, res) => {
+  // eslint-disable-next-line global-require
+  require('../push').saveSubscription(req.member.participantId, req.body.subscription);
+  res.status(201).json({ ok: true });
+});
+
+router.post('/push/unsubscribe', requireMember, (req, res) => {
+  // eslint-disable-next-line global-require
+  require('../push').removeSubscription(req.body.endpoint);
   res.json({ ok: true });
 });
 

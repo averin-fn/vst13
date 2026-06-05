@@ -2039,6 +2039,32 @@ a {
   color: var(--accent-2);
   font-weight: 700;
 }
+
+.chat-push-btn {
+  margin: 0 0 16px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.chat-push-btn:hover {
+  border-color: var(--accent-2);
+  color: var(--text);
+}
+.chat-push-btn.on {
+  color: var(--accent-2);
+  border-color: var(--accent-2);
+  background: rgba(170, 184, 134, 0.1);
+}
+.chat-push-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
 .chat-typing {
   min-height: 18px;
   margin: 6px 2px 0;

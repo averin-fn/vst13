@@ -180,6 +180,21 @@ export const api = {
       body: JSON.stringify({ channel, lastId })
     }),
 
+  // пуш-уведомления
+  getPushKey: () => request('/member/push/key', { memberAuth: true }),
+  subscribePush: (subscription) =>
+    request('/member/push/subscribe', {
+      method: 'POST',
+      memberAuth: true,
+      body: JSON.stringify({ subscription })
+    }),
+  unsubscribePush: (endpoint) =>
+    request('/member/push/unsubscribe', {
+      method: 'POST',
+      memberAuth: true,
+      body: JSON.stringify({ endpoint })
+    }),
+
   // RSVP
   getMyRsvps: () => request('/member/rsvps', { memberAuth: true }),
   setMyRsvp: (eventId, status) =>

@@ -101,4 +101,9 @@ function emitMessage(message) {
   broadcast({ type: 'message', message });
 }
 
-module.exports = { setup, emitMessage };
+// Список id участников, подключённых сейчас по WebSocket
+function onlineIds() {
+  return new Set([...clients].map((ws) => ws.member.participantId));
+}
+
+module.exports = { setup, emitMessage, onlineIds };

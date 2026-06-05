@@ -18,6 +18,9 @@ server/data.db
 *.local-backup
 server/backups/
 
+# VAPID-ключи для пуш-уведомлений (секрет, генерируются на каждом окружении)
+server/vapid.json
+
 # Загружаемый контент в server/uploads:
 # картинки храним в репозитории, 3D-модели игнорируем (runtime)
 server/uploads/*
