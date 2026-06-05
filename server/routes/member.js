@@ -97,11 +97,14 @@ function normalizeChannel(value) {
   return ALLOWED_CHANNELS.includes(ch) ? ch : 'general';
 }
 
+const CHAT_COLS = `m.id, m.channel, m.message, m.created_at, m.participant_id,
+  m.attachment_url, m.attachment_type, m.attachment_name, p.callsign, p.name`;
+
 router.get('/chat', requireMember, (req, res) => {
   const channel = normalizeChannel(req.query.channel);
   const rows = db
     .prepare(
-      `SELECT m.id, m.channel, m.message, m.created_at, m.participant_id, p.callsign, p.name
+      `SELECT ${CHAT_COLS}
        FROM chat_messages m
        JOIN participants p ON p.id = m.participant_id
        WHERE m.channel = ? AND m.id > ?
@@ -112,15 +115,44 @@ router.get('/chat', requireMember, (req, res) => {
   res.json(rows);
 });
 
+// Достаём вложение из тела: только наши /uploads, тип image|file
+function pickAttachment(body) {
+  const a = body && body.attachment;
+  if (!a || typeof a.url !== 'string') return { url: '', type: '', name: '' };
+  const url = a.url.startsWith('/uploads/') ? a.url : '';
+  if (!url) return { url: '', type: '', name: '' };
+  const type = a.type === 'image' ? 'image' : 'file';
+  const name = String(a.name || '').slice(0, 200);
+  return { url, type, name };
+}
+
 router.post('/chat', requireMember, (req, res) => {
   const message = String(req.body.message || '').trim();
-  if (!message) return res.status(400).json({ error: 'Пустое сообщение' });
+  const att = pickAttachment(req.body);
+  if (!message && !att.url) return res.status(400).json({ error: 'Пустое сообщение' });
   if (message.length > 1000) return res.status(400).json({ error: 'Слишком длинное сообщение' });
   const channel = normalizeChannel(req.body.channel);
   const info = db
-    .prepare('INSERT INTO chat_messages (participant_id, channel, message, created_at) VALUES (?, ?, ?, ?)')
-    .run(req.member.participantId, channel, message, new Date().toISOString());
-  res.status(201).json({ id: Number(info.lastInsertRowid) });
+    .prepare(
+      `INSERT INTO chat_messages
+       (participant_id, channel, message, created_at, attachment_url, attachment_type, attachment_name)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    )
+    .run(req.member.participantId, channel, message, new Date().toISOString(), att.url, att.type, att.name);
+  const id = Number(info.lastInsertRowid);
+
+  // Мгновенная рассылка через WebSocket
+  const row = db
+    .prepare(
+      `SELECT ${CHAT_COLS}
+       FROM chat_messages m JOIN participants p ON p.id = m.participant_id
+       WHERE m.id = ?`
+    )
+    .get(id);
+  // eslint-disable-next-line global-require
+  require('../realtime').emitMessage(row);
+
+  res.status(201).json({ id });
 });
 
 // Сколько непрочитанных сообщений у участника

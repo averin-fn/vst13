@@ -166,11 +166,11 @@ export const api = {
   // чат
   getChat: (channel = 'general', since = 0) =>
     request(`/member/chat?channel=${encodeURIComponent(channel)}&since=${since}`, { memberAuth: true }),
-  sendChatMessage: (channel, message) =>
+  sendChatMessage: (channel, message, attachment = null) =>
     request('/member/chat', {
       method: 'POST',
       memberAuth: true,
-      body: JSON.stringify({ channel, message })
+      body: JSON.stringify({ channel, message, attachment })
     }),
   getUnreadChat: () => request('/member/chat/unread', { memberAuth: true }),
   markChatRead: (channel, lastId) =>

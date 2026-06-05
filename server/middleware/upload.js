@@ -5,7 +5,13 @@ const multer = require('multer');
 const uploadsDir = path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 
-const ALLOWED_EXT = ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.glb', '.gltf'];
+const ALLOWED_EXT = [
+  // изображения и 3D-модели
+  '.jpg', '.jpeg', '.png', '.webp', '.gif', '.glb', '.gltf',
+  // файлы для чата
+  '.pdf', '.txt', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
+  '.zip', '.rar', '.7z', '.mp4', '.mov', '.mp3', '.m4a', '.wav'
+];
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, uploadsDir),

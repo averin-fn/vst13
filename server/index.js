@@ -1,4 +1,5 @@
 const fs = require('fs');
+const http = require('http');
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
@@ -32,6 +33,8 @@ if (fs.existsSync(clientDist)) {
 }
 
 const PORT = process.env.PORT || 4100;
-app.listen(PORT, () => {
+const server = http.createServer(app);
+require('./realtime').setup(server); // WebSocket на /api/ws
+server.listen(PORT, () => {
   console.log(`Сервер запущен на http://localhost:${PORT}`);
 });
