@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import { isMemberAuthed } from '../api';
 
 const memberLinks = [
@@ -21,10 +21,10 @@ export default function Navbar() {
 
   return (
     <aside className="sidebar">
-      <div className="sidebar-brand">
+      <Link to="/" className="sidebar-brand" onClick={() => setOpen(false)} title="На главную">
         <span className="sidebar-logo">⌖</span>
         <span className="sidebar-name">ВСТ13</span>
-      </div>
+      </Link>
 
       <button
         type="button"
