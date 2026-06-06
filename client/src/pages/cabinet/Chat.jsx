@@ -11,6 +11,17 @@ const CHANNELS = [
   { id: 'games', label: 'Игры' }
 ];
 
+// Реакции (должны совпадать с ALLOWED_REACTIONS на сервере)
+const QUICK_REACTIONS = ['👍', '❤️', '😂', '🔥', '👏', '😮', '🫡', '✅'];
+
+// Смайлики для вставки в сообщение
+const EMOJIS = [
+  '😀', '😁', '😂', '🤣', '😊', '😍', '😎', '😉', '😅', '🙂',
+  '🙃', '😴', '🤔', '😱', '😢', '😡', '🥳', '😬', '🤝', '🙏',
+  '👍', '👎', '👌', '✌️', '🤙', '💪', '👏', '🫡', '🔥', '💥',
+  '⚡', '✅', '❌', '❗', '❓', '🎯', '🪖', '🎖️', '🏆', '⭐'
+];
+
 function formatTime(value) {
   if (!value) return '';
   const d = new Date(value);
@@ -32,6 +43,8 @@ export default function CabinetChat() {
   const [push, setPush] = useState('off'); // unsupported|denied|on|off|busy
   const [installable, setInstallable] = useState(false);
   const [iosHint, setIosHint] = useState(false);
+  const [emojiOpen, setEmojiOpen] = useState(false);
+  const [reactFor, setReactFor] = useState(null); // id сообщения для попапа реакций
 
   const fileInputRef = useRef(null);
   const scrollRef = useRef(null);
@@ -107,6 +120,10 @@ export default function CabinetChat() {
           } else if (msg.participant_id !== meRef.current?.id) {
             refreshUnread && refreshUnread();
           }
+        } else if (data.type === 'reaction') {
+          setMessages((prev) =>
+            prev.map((m) => (m.id === data.messageId ? { ...m, reactions: data.reactions } : m))
+          );
         } else if (data.type === 'presence') {
           setOnline(data.online || []);
         } else if (data.type === 'typing') {
@@ -196,6 +213,35 @@ export default function CabinetChat() {
     } finally {
       setSending(false);
       inputRef.current?.focus();
+    }
+  };
+
+  // Вставка смайла в поле ввода (в позицию курсора)
+  const insertEmoji = (emoji) => {
+    const el = inputRef.current;
+    if (!el) {
+      setDraft((d) => d + emoji);
+      return;
+    }
+    const start = el.selectionStart ?? draft.length;
+    const end = el.selectionEnd ?? draft.length;
+    const next = draft.slice(0, start) + emoji + draft.slice(end);
+    setDraft(next);
+    requestAnimationFrame(() => {
+      el.focus();
+      const pos = start + emoji.length;
+      el.setSelectionRange(pos, pos);
+    });
+  };
+
+  // Поставить/снять реакцию
+  const toggleReaction = async (messageId, emoji) => {
+    setReactFor(null);
+    try {
+      const { reactions } = await api.toggleReaction(messageId, emoji);
+      setMessages((prev) => prev.map((m) => (m.id === messageId ? { ...m, reactions } : m)));
+    } catch (err) {
+      setError(err.message || 'Не удалось поставить реакцию');
     }
   };
 
@@ -330,6 +376,36 @@ export default function CabinetChat() {
                         📎 {m.attachment_name || 'файл'}
                       </a>
                     ))}
+
+                  <div className="chat-msg-foot">
+                    {(m.reactions || []).map((r) => (
+                      <button
+                        key={r.emoji}
+                        type="button"
+                        className={`chat-react ${me && r.by.includes(me.id) ? 'mine' : ''}`}
+                        onClick={() => toggleReaction(m.id, r.emoji)}
+                      >
+                        {r.emoji} {r.count}
+                      </button>
+                    ))}
+                    <button
+                      type="button"
+                      className="chat-react-add"
+                      onClick={() => setReactFor(reactFor === m.id ? null : m.id)}
+                      title="Добавить реакцию"
+                    >
+                      🙂+
+                    </button>
+                    {reactFor === m.id && (
+                      <div className="chat-react-pop">
+                        {QUICK_REACTIONS.map((e) => (
+                          <button key={e} type="button" onClick={() => toggleReaction(m.id, e)}>
+                            {e}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               );
             })}
@@ -350,6 +426,16 @@ export default function CabinetChat() {
             </div>
           )}
 
+          {emojiOpen && (
+            <div className="chat-emoji-panel">
+              {EMOJIS.map((e) => (
+                <button key={e} type="button" onClick={() => insertEmoji(e)}>
+                  {e}
+                </button>
+              ))}
+            </div>
+          )}
+
           <form className="chat-form" onSubmit={send}>
             <input type="file" ref={fileInputRef} onChange={pickFile} hidden />
             <button
@@ -360,6 +446,14 @@ export default function CabinetChat() {
               title="Прикрепить файл или фото"
             >
               {attaching ? '…' : '📎'}
+            </button>
+            <button
+              type="button"
+              className={`chat-emoji-btn ${emojiOpen ? 'on' : ''}`}
+              onClick={() => setEmojiOpen((v) => !v)}
+              title="Смайлики"
+            >
+              😊
             </button>
             <input
               ref={inputRef}
@@ -372,10 +466,12 @@ export default function CabinetChat() {
             />
             <button
               type="submit"
-              className="btn btn-primary"
+              className="btn btn-primary chat-send"
               disabled={sending || (!draft.trim() && !pendingAtt)}
+              aria-label="Отправить"
             >
-              {sending ? '…' : 'Отправить'}
+              <span className="chat-send-full">{sending ? '…' : 'Отправить'}</span>
+              <span className="chat-send-icon" aria-hidden="true">{sending ? '…' : '➤'}</span>
             </button>
           </form>
 

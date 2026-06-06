@@ -101,9 +101,14 @@ function emitMessage(message) {
   broadcast({ type: 'message', message });
 }
 
+// Изменение реакций на сообщении
+function emitReaction(messageId, reactions) {
+  broadcast({ type: 'reaction', messageId, reactions });
+}
+
 // Список id участников, подключённых сейчас по WebSocket
 function onlineIds() {
   return new Set([...clients].map((ws) => ws.member.participantId));
 }
 
-module.exports = { setup, emitMessage, onlineIds };
+module.exports = { setup, emitMessage, emitReaction, onlineIds };

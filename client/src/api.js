@@ -172,6 +172,12 @@ export const api = {
       memberAuth: true,
       body: JSON.stringify({ channel, message, attachment })
     }),
+  toggleReaction: (messageId, emoji) =>
+    request(`/member/chat/${messageId}/reactions`, {
+      method: 'POST',
+      memberAuth: true,
+      body: JSON.stringify({ emoji })
+    }),
   getUnreadChat: () => request('/member/chat/unread', { memberAuth: true }),
   markChatRead: (channel, lastId) =>
     request('/member/chat/mark-read', {

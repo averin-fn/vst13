@@ -135,6 +135,20 @@ db.exec(`
   );
 `);
 
+// Реакции на сообщения чата (эмодзи)
+db.exec(`
+  CREATE TABLE IF NOT EXISTS chat_reactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    message_id INTEGER NOT NULL,
+    participant_id INTEGER NOT NULL,
+    emoji TEXT NOT NULL,
+    created_at TEXT NOT NULL,
+    UNIQUE(message_id, participant_id, emoji),
+    FOREIGN KEY (message_id) REFERENCES chat_messages(id) ON DELETE CASCADE,
+    FOREIGN KEY (participant_id) REFERENCES participants(id) ON DELETE CASCADE
+  );
+`);
+
 // Дефолтный администратор при первом запуске.
 // Логин/пароль можно задать через переменные окружения ADMIN_USER / ADMIN_PASSWORD.
 const adminsCount = db.prepare('SELECT COUNT(*) AS c FROM admins').get().c;

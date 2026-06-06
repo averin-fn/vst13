@@ -100,6 +100,37 @@ function normalizeChannel(value) {
 const CHAT_COLS = `m.id, m.channel, m.message, m.created_at, m.participant_id,
   m.attachment_url, m.attachment_type, m.attachment_name, p.callsign, p.name`;
 
+// Разрешённый набор реакций
+const ALLOWED_REACTIONS = ['👍', '❤️', '😂', '🔥', '👏', '😮', '🫡', '✅'];
+
+// Реакции для набора сообщений: { messageId -> [{ emoji, count, by:[participantId] }] }
+function reactionsForMessages(ids) {
+  const map = new Map();
+  if (!ids.length) return map;
+  const placeholders = ids.map(() => '?').join(',');
+  const rows = db
+    .prepare(
+      `SELECT message_id, emoji, participant_id FROM chat_reactions
+       WHERE message_id IN (${placeholders})
+       ORDER BY id ASC`
+    )
+    .all(...ids);
+  for (const r of rows) {
+    if (!map.has(r.message_id)) map.set(r.message_id, new Map());
+    const byEmoji = map.get(r.message_id);
+    if (!byEmoji.has(r.emoji)) byEmoji.set(r.emoji, []);
+    byEmoji.get(r.emoji).push(r.participant_id);
+  }
+  const out = new Map();
+  for (const [mid, byEmoji] of map) {
+    out.set(
+      mid,
+      [...byEmoji.entries()].map(([emoji, by]) => ({ emoji, count: by.length, by }))
+    );
+  }
+  return out;
+}
+
 router.get('/chat', requireMember, (req, res) => {
   const channel = normalizeChannel(req.query.channel);
   const rows = db
@@ -112,7 +143,36 @@ router.get('/chat', requireMember, (req, res) => {
        LIMIT 200`
     )
     .all(channel, Number(req.query.since || 0));
+  const rmap = reactionsForMessages(rows.map((r) => r.id));
+  for (const row of rows) row.reactions = rmap.get(row.id) || [];
   res.json(rows);
+});
+
+// Поставить/снять реакцию (переключатель)
+router.post('/chat/:id/reactions', requireMember, (req, res) => {
+  const messageId = Number(req.params.id);
+  const emoji = String(req.body.emoji || '');
+  if (!ALLOWED_REACTIONS.includes(emoji)) {
+    return res.status(400).json({ error: 'Недопустимая реакция' });
+  }
+  const msg = db.prepare('SELECT id FROM chat_messages WHERE id = ?').get(messageId);
+  if (!msg) return res.status(404).json({ error: 'Сообщение не найдено' });
+
+  const existing = db
+    .prepare('SELECT id FROM chat_reactions WHERE message_id = ? AND participant_id = ? AND emoji = ?')
+    .get(messageId, req.member.participantId, emoji);
+  if (existing) {
+    db.prepare('DELETE FROM chat_reactions WHERE id = ?').run(existing.id);
+  } else {
+    db.prepare(
+      'INSERT INTO chat_reactions (message_id, participant_id, emoji, created_at) VALUES (?, ?, ?, ?)'
+    ).run(messageId, req.member.participantId, emoji, new Date().toISOString());
+  }
+
+  const reactions = reactionsForMessages([messageId]).get(messageId) || [];
+  // eslint-disable-next-line global-require
+  require('../realtime').emitReaction(messageId, reactions);
+  res.json({ reactions });
 });
 
 // Достаём вложение из тела: только наши /uploads, тип image|file
