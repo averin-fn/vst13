@@ -71,4 +71,30 @@ async function sendToParticipants(excludeIds, payload) {
   );
 }
 
-module.exports = { publicKey, saveSubscription, removeSubscription, sendToParticipants };
+// Дата YYYY-MM-DD -> DD.MM.YYYY (если формат другой — отдаём как есть)
+function formatDate(value) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(value || '');
+  return m ? `${m[3]}.${m[2]}.${m[1]}` : value || '';
+}
+
+// Уведомление о новом мероприятии — всем подписчикам, кроме исключённых
+function notifyNewEvent(event, excludeIds = []) {
+  const parts = [];
+  if (event.date) parts.push(formatDate(event.date));
+  if (event.location) parts.push(event.location);
+  const body = (event.title || 'Новая игра') + (parts.length ? `\n${parts.join(' • ')}` : '');
+  return sendToParticipants(excludeIds, {
+    title: '📅 Новая игра',
+    body: body.slice(0, 160),
+    url: '/calendar',
+    tag: `event-${event.id || Date.now()}`
+  });
+}
+
+module.exports = {
+  publicKey,
+  saveSubscription,
+  removeSubscription,
+  sendToParticipants,
+  notifyNewEvent
+};

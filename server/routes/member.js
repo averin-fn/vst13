@@ -334,7 +334,11 @@ router.post('/events', requireMember, ensureEventManager, (req, res) => {
   const info = db
     .prepare('INSERT INTO events (title, date, location, description, image) VALUES (?, ?, ?, ?, ?)')
     .run(data.title, data.date, data.location, data.description, data.image);
-  res.status(201).json({ id: Number(info.lastInsertRowid) });
+  const id = Number(info.lastInsertRowid);
+  // Оповещаем всех, кроме автора
+  // eslint-disable-next-line global-require
+  require('../push').notifyNewEvent({ ...data, id }, [req.member.participantId]).catch(() => {});
+  res.status(201).json({ id });
 });
 
 router.put('/events/:id', requireMember, ensureEventManager, (req, res) => {

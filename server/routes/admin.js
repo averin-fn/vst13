@@ -188,7 +188,10 @@ router.post('/events', (req, res) => {
   const info = db
     .prepare('INSERT INTO events (title, date, location, description, image) VALUES (?, ?, ?, ?, ?)')
     .run(data.title, data.date, data.location, data.description, data.image);
-  res.status(201).json({ id: Number(info.lastInsertRowid) });
+  const id = Number(info.lastInsertRowid);
+  // eslint-disable-next-line global-require
+  require('../push').notifyNewEvent({ ...data, id }).catch(() => {});
+  res.status(201).json({ id });
 });
 
 router.put('/events/:id', (req, res) => {
