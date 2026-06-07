@@ -235,6 +235,37 @@ router.delete('/feedback/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+/* ---------------- Мастерская ---------------- */
+// Заявки на ремонт
+router.get('/repair', (req, res) => {
+  const rows = db.prepare('SELECT * FROM repair_requests ORDER BY datetime(created_at) DESC').all();
+  res.json(rows);
+});
+
+router.delete('/repair/:id', (req, res) => {
+  const info = db.prepare('DELETE FROM repair_requests WHERE id = ?').run(req.params.id);
+  if (info.changes === 0) return res.status(404).json({ error: 'Заявка не найдена' });
+  res.json({ ok: true });
+});
+
+// Галерея готовых работ
+router.post('/workshop/works', (req, res) => {
+  const title = String(req.body.title || '').trim();
+  const description = String(req.body.description || '').trim();
+  const image = String(req.body.image || '');
+  if (!image) return res.status(400).json({ error: 'Добавьте фото работы' });
+  const info = db
+    .prepare('INSERT INTO workshop_works (title, description, image, created_at) VALUES (?, ?, ?, ?)')
+    .run(title, description, image, new Date().toISOString());
+  res.status(201).json({ id: Number(info.lastInsertRowid) });
+});
+
+router.delete('/workshop/works/:id', (req, res) => {
+  const info = db.prepare('DELETE FROM workshop_works WHERE id = ?').run(req.params.id);
+  if (info.changes === 0) return res.status(404).json({ error: 'Работа не найдена' });
+  res.json({ ok: true });
+});
+
 /* ---------------- Настройки сайта ---------------- */
 const ALLOWED_SETTINGS = ['header_image'];
 

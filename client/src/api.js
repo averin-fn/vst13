@@ -73,6 +73,10 @@ export const api = {
   getSettings: () => request('/settings'),
   sendFeedback: (payload) => request('/feedback', { method: 'POST', body: JSON.stringify(payload) }),
 
+  // ---- мастерская ----
+  getWorks: () => request('/workshop/works'),
+  sendRepair: (payload) => request('/workshop/repair', { method: 'POST', body: JSON.stringify(payload) }),
+
   // ---- авторизация (админ) ----
   login: (username, password) =>
     request('/auth/login', { method: 'POST', body: JSON.stringify({ username, password }) }),
@@ -96,6 +100,13 @@ export const api = {
   // ---- админ: обратная связь ----
   getFeedback: () => request('/admin/feedback', { auth: true }),
   deleteFeedback: (id) => request(`/admin/feedback/${id}`, { method: 'DELETE', auth: true }),
+
+  // ---- админ: мастерская ----
+  getRepairRequests: () => request('/admin/repair', { auth: true }),
+  deleteRepairRequest: (id) => request(`/admin/repair/${id}`, { method: 'DELETE', auth: true }),
+  createWork: (data) =>
+    request('/admin/workshop/works', { method: 'POST', auth: true, body: JSON.stringify(data) }),
+  deleteWork: (id) => request(`/admin/workshop/works/${id}`, { method: 'DELETE', auth: true }),
 
   // ---- админ: настройки сайта ----
   updateSettings: (data) =>

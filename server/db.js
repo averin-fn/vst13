@@ -149,6 +149,25 @@ db.exec(`
   );
 `);
 
+// Мастерская: заявки на ремонт и галерея готовых работ
+db.exec(`
+  CREATE TABLE IF NOT EXISTS repair_requests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    contact TEXT NOT NULL DEFAULT '',
+    message TEXT NOT NULL,
+    created_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS workshop_works (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL DEFAULT '',
+    description TEXT NOT NULL DEFAULT '',
+    image TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL
+  );
+`);
+
 // Дефолтный администратор при первом запуске.
 // Логин/пароль можно задать через переменные окружения ADMIN_USER / ADMIN_PASSWORD.
 const adminsCount = db.prepare('SELECT COUNT(*) AS c FROM admins').get().c;

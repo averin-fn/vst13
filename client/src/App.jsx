@@ -4,6 +4,7 @@ import Home from './pages/Home.jsx';
 import Participants from './pages/Participants.jsx';
 import ParticipantDetail from './pages/ParticipantDetail.jsx';
 import Feedback from './pages/Feedback.jsx';
+import Workshop from './pages/Workshop.jsx';
 import Calendar from './pages/Calendar.jsx';
 import Rules from './pages/Rules.jsx';
 import Login from './pages/admin/Login.jsx';
@@ -13,6 +14,7 @@ import EventsAdmin from './pages/admin/EventsAdmin.jsx';
 import FeedbackAdmin from './pages/admin/FeedbackAdmin.jsx';
 import SettingsAdmin from './pages/admin/SettingsAdmin.jsx';
 import RulesAdmin from './pages/admin/RulesAdmin.jsx';
+import WorkshopAdmin from './pages/admin/WorkshopAdmin.jsx';
 import CabinetLogin from './pages/cabinet/Login.jsx';
 import Cabinet from './pages/cabinet/Cabinet.jsx';
 import CabinetProfile from './pages/cabinet/Profile.jsx';
@@ -30,6 +32,7 @@ export default function App() {
         <Route path="/participants/:id" element={<ParticipantDetail />} />
         <Route path="/events" element={<Navigate to="/calendar" replace />} />
         <Route path="/calendar" element={<Calendar />} />
+        <Route path="/workshop" element={<Workshop />} />
         <Route path="/rules" element={<Navigate to="/cabinet/rules" replace />} />
         <Route path="/feedback" element={<Feedback />} />
         <Route path="*" element={<p className="notice">Страница не найдена</p>} />
@@ -54,6 +57,7 @@ export default function App() {
         <Route path="feedback" element={<FeedbackAdmin />} />
         <Route path="settings" element={<SettingsAdmin />} />
         <Route path="rules" element={<RulesAdmin />} />
+        <Route path="workshop" element={<WorkshopAdmin />} />
       </Route>
     </Routes>
   );

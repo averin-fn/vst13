@@ -5,12 +5,14 @@ import { isMemberAuthed } from '../api';
 const memberLinks = [
   { to: '/', label: 'Основной', end: true },
   { to: '/participants', label: 'Участники' },
-  { to: '/calendar', label: 'Календарь' }
+  { to: '/calendar', label: 'Календарь' },
+  { to: '/workshop', label: 'Мастерская' }
 ];
 const guestLinks = [
   { to: '/', label: 'Основной', end: true },
   { to: '/participants', label: 'Участники' },
-  { to: '/calendar', label: 'Календарь' }
+  { to: '/calendar', label: 'Календарь' },
+  { to: '/workshop', label: 'Мастерская' }
 ];
 const cabinetLink = { to: '/cabinet', label: 'Личный кабинет', highlight: true };
 
