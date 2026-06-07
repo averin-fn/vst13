@@ -951,6 +951,35 @@ a {
   gap: 18px;
 }
 
+/* Вкладки «Актуальные / Архив» */
+.events-tabs {
+  display: flex;
+  gap: 8px;
+  margin: 0 0 20px;
+}
+.events-tab {
+  padding: 8px 18px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: var(--bg-card);
+  color: var(--text-dim);
+  font-family: var(--font-head);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.events-tab:hover {
+  color: var(--text);
+  border-color: var(--accent-2);
+}
+.events-tab.active {
+  color: #15170f;
+  background: var(--accent-grad);
+  border-color: transparent;
+}
+
 .event-card {
   display: flex;
   overflow: hidden;
