@@ -32,4 +32,17 @@ const upload = multer({
   }
 });
 
+// Публичная загрузка (форма заявки на ремонт): только картинки, лимит 15 МБ
+const IMAGE_EXT = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+const imageUpload = multer({
+  storage,
+  limits: { fileSize: 15 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase();
+    if (IMAGE_EXT.includes(ext)) return cb(null, true);
+    cb(new Error('Можно загрузить только изображение'));
+  }
+});
+
 module.exports = upload;
+module.exports.image = imageUpload;

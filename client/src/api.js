@@ -76,6 +76,11 @@ export const api = {
   // ---- мастерская ----
   getWorks: () => request('/workshop/works'),
   sendRepair: (payload) => request('/workshop/repair', { method: 'POST', body: JSON.stringify(payload) }),
+  uploadRepairPhoto: (file) => {
+    const fd = new FormData();
+    fd.append('file', file);
+    return request('/workshop/upload', { method: 'POST', body: fd });
+  },
 
   // ---- авторизация (админ) ----
   login: (username, password) =>

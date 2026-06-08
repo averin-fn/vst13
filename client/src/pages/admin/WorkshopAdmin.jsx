@@ -122,6 +122,11 @@ export default function WorkshopAdmin() {
               </div>
               {r.contact && <div className="feedback-contact">Контакт: {r.contact}</div>}
               <p className="feedback-message">{r.message}</p>
+              {r.photo && (
+                <a href={r.photo} target="_blank" rel="noreferrer" className="repair-photo-thumb">
+                  <img src={r.photo} alt="Фото к заявке" />
+                </a>
+              )}
               <button className="btn btn-danger btn-sm" onClick={() => removeRequest(r)}>
                 Удалить
               </button>

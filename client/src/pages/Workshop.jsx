@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { api } from '../api';
 
-const EMPTY = { name: '', contact: '', message: '' };
+const EMPTY = { name: '', contact: '', message: '', photo: '' };
 
 export default function Workshop() {
   const [works, setWorks] = useState([]);
@@ -9,6 +9,7 @@ export default function Workshop() {
   const [status, setStatus] = useState('idle'); // idle | sending | sent | error
   const [error, setError] = useState('');
   const [lightbox, setLightbox] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     api
@@ -18,6 +19,22 @@ export default function Workshop() {
   }, []);
 
   const update = (field) => (e) => setForm({ ...form, [field]: e.target.value });
+
+  const pickPhoto = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    if (!file) return;
+    setUploading(true);
+    setError('');
+    try {
+      const { url } = await api.uploadRepairPhoto(file);
+      setForm((f) => ({ ...f, photo: url }));
+    } catch (err) {
+      setError(err.message || 'Не удалось загрузить фото');
+    } finally {
+      setUploading(false);
+    }
+  };
 
   const onSubmit = async (e) => {
     e.preventDefault();
@@ -74,6 +91,20 @@ export default function Workshop() {
               placeholder="Опишите привод/снаряжение и неисправность"
             />
           </label>
+
+          <label className="field">
+            <span>Фото (необязательно)</span>
+            <input type="file" accept="image/*" onChange={pickPhoto} disabled={uploading} />
+            {uploading && <span className="file-status">Загрузка…</span>}
+          </label>
+          {form.photo && (
+            <div className="repair-photo-preview">
+              <img src={form.photo} alt="Фото к заявке" />
+              <button type="button" onClick={() => setForm((f) => ({ ...f, photo: '' }))}>
+                ✕ убрать фото
+              </button>
+            </div>
+          )}
 
           {error && <p className="notice notice-error">{error}</p>}
           {status === 'sent' && (

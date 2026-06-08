@@ -156,6 +156,7 @@ db.exec(`
     name TEXT NOT NULL,
     contact TEXT NOT NULL DEFAULT '',
     message TEXT NOT NULL,
+    photo TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL
   );
 
@@ -167,6 +168,9 @@ db.exec(`
     created_at TEXT NOT NULL
   );
 `);
+
+// Миграция: фото к заявке на ремонт (для уже созданной таблицы)
+try { db.exec("ALTER TABLE repair_requests ADD COLUMN photo TEXT NOT NULL DEFAULT ''"); } catch { /* колонка уже есть */ }
 
 // Дефолтный администратор при первом запуске.
 // Логин/пароль можно задать через переменные окружения ADMIN_USER / ADMIN_PASSWORD.
