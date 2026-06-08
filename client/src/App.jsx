@@ -15,6 +15,7 @@ import FeedbackAdmin from './pages/admin/FeedbackAdmin.jsx';
 import SettingsAdmin from './pages/admin/SettingsAdmin.jsx';
 import RulesAdmin from './pages/admin/RulesAdmin.jsx';
 import WorkshopAdmin from './pages/admin/WorkshopAdmin.jsx';
+import ActsAdmin from './pages/admin/ActsAdmin.jsx';
 import CabinetLogin from './pages/cabinet/Login.jsx';
 import Cabinet from './pages/cabinet/Cabinet.jsx';
 import CabinetProfile from './pages/cabinet/Profile.jsx';
@@ -58,6 +59,7 @@ export default function App() {
         <Route path="settings" element={<SettingsAdmin />} />
         <Route path="rules" element={<RulesAdmin />} />
         <Route path="workshop" element={<WorkshopAdmin />} />
+        <Route path="acts" element={<ActsAdmin />} />
       </Route>
     </Routes>
   );

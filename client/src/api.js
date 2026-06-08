@@ -112,6 +112,10 @@ export const api = {
   createWork: (data) =>
     request('/admin/workshop/works', { method: 'POST', auth: true, body: JSON.stringify(data) }),
   deleteWork: (id) => request(`/admin/workshop/works/${id}`, { method: 'DELETE', auth: true }),
+  getActs: () => request('/admin/acts', { auth: true }),
+  createAct: (data) =>
+    request('/admin/acts', { method: 'POST', auth: true, body: JSON.stringify(data) }),
+  deleteAct: (id) => request(`/admin/acts/${id}`, { method: 'DELETE', auth: true }),
 
   // ---- админ: настройки сайта ----
   updateSettings: (data) =>

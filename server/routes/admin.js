@@ -266,6 +266,54 @@ router.delete('/workshop/works/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+// Акты выполненных работ
+function parseAct(row) {
+  let items = [];
+  let photos = [];
+  try { items = JSON.parse(row.items || '[]'); } catch { items = []; }
+  try { photos = JSON.parse(row.photos || '[]'); } catch { photos = []; }
+  return { ...row, items, photos };
+}
+
+router.get('/acts', (req, res) => {
+  const rows = db.prepare('SELECT * FROM repair_acts ORDER BY id DESC').all();
+  res.json(rows.map(parseAct));
+});
+
+router.post('/acts', (req, res) => {
+  const client = String(req.body.client || '').trim();
+  const device = String(req.body.device || '').trim();
+  const note = String(req.body.note || '').trim();
+  // Пункты ремонта (чек-лист): [{ text, done }]
+  const items = Array.isArray(req.body.items)
+    ? req.body.items
+        .map((it) => ({ text: String(it.text || '').trim(), done: !!it.done }))
+        .filter((it) => it.text)
+    : [];
+  // Фото: только наши /uploads
+  const photos = Array.isArray(req.body.photos)
+    ? req.body.photos.filter((u) => typeof u === 'string' && u.startsWith('/uploads/'))
+    : [];
+  if (!device && !client && items.length === 0) {
+    return res.status(400).json({ error: 'Заполните хотя бы привод и пункты ремонта' });
+  }
+  // total = количество выполненных пунктов
+  const total = items.filter((it) => it.done).length;
+  const info = db
+    .prepare(
+      `INSERT INTO repair_acts (client, device, items, photos, note, total, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    )
+    .run(client, device, JSON.stringify(items), JSON.stringify(photos), note, total, new Date().toISOString());
+  res.status(201).json({ id: Number(info.lastInsertRowid) });
+});
+
+router.delete('/acts/:id', (req, res) => {
+  const info = db.prepare('DELETE FROM repair_acts WHERE id = ?').run(req.params.id);
+  if (info.changes === 0) return res.status(404).json({ error: 'Акт не найден' });
+  res.json({ ok: true });
+});
+
 /* ---------------- Настройки сайта ---------------- */
 const ALLOWED_SETTINGS = ['header_image'];
 

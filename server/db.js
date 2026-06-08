@@ -167,6 +167,17 @@ db.exec(`
     image TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS repair_acts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    client TEXT NOT NULL DEFAULT '',
+    device TEXT NOT NULL DEFAULT '',
+    items TEXT NOT NULL DEFAULT '[]',
+    photos TEXT NOT NULL DEFAULT '[]',
+    note TEXT NOT NULL DEFAULT '',
+    total INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL
+  );
 `);
 
 // Миграция: фото к заявке на ремонт (для уже созданной таблицы)
