@@ -15,7 +15,6 @@ import FeedbackAdmin from './pages/admin/FeedbackAdmin.jsx';
 import SettingsAdmin from './pages/admin/SettingsAdmin.jsx';
 import RulesAdmin from './pages/admin/RulesAdmin.jsx';
 import WorkshopAdmin from './pages/admin/WorkshopAdmin.jsx';
-import ActsAdmin from './pages/admin/ActsAdmin.jsx';
 import CabinetLogin from './pages/cabinet/Login.jsx';
 import Cabinet from './pages/cabinet/Cabinet.jsx';
 import CabinetProfile from './pages/cabinet/Profile.jsx';
@@ -23,6 +22,7 @@ import CabinetEvents from './pages/cabinet/Events.jsx';
 import CabinetChat from './pages/cabinet/Chat.jsx';
 import CabinetPassword from './pages/cabinet/Password.jsx';
 import CabinetEventsManage from './pages/cabinet/EventsManage.jsx';
+import CabinetActs from './pages/cabinet/Acts.jsx';
 
 export default function App() {
   return (
@@ -47,6 +47,7 @@ export default function App() {
         <Route path="chat" element={<CabinetChat />} />
         <Route path="password" element={<CabinetPassword />} />
         <Route path="events-manage" element={<CabinetEventsManage />} />
+        <Route path="acts" element={<CabinetActs />} />
         <Route path="rules" element={<Rules />} />
       </Route>
 
@@ -59,7 +60,6 @@ export default function App() {
         <Route path="settings" element={<SettingsAdmin />} />
         <Route path="rules" element={<RulesAdmin />} />
         <Route path="workshop" element={<WorkshopAdmin />} />
-        <Route path="acts" element={<ActsAdmin />} />
       </Route>
     </Routes>
   );

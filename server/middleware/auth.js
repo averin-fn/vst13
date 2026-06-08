@@ -53,4 +53,25 @@ function ensureEventManager(req, res, next) {
   next();
 }
 
-module.exports = { signAdmin, signMember, requireAuth, requireMember, ensureEventManager };
+// Проверка флага can_manage_acts (доступ к актам мастерской).
+function ensureActsManager(req, res, next) {
+  if (!req.member) return res.status(401).json({ error: 'Требуется вход' });
+  // eslint-disable-next-line global-require
+  const db = require('../db');
+  const row = db
+    .prepare('SELECT can_manage_acts FROM participants WHERE id = ?')
+    .get(req.member.participantId);
+  if (!row || !row.can_manage_acts) {
+    return res.status(403).json({ error: 'Нет доступа к актам' });
+  }
+  next();
+}
+
+module.exports = {
+  signAdmin,
+  signMember,
+  requireAuth,
+  requireMember,
+  ensureEventManager,
+  ensureActsManager
+};

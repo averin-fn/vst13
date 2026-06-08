@@ -117,6 +117,9 @@ try { db.exec('ALTER TABLE participants ADD COLUMN is_admin INTEGER NOT NULL DEF
 // Миграция: номер отряда солдата (1..3; 0 — не назначен)
 try { db.exec('ALTER TABLE participants ADD COLUMN squad INTEGER NOT NULL DEFAULT 0'); } catch { /* колонка уже есть */ }
 
+// Миграция: доступ к разделу «Акты» мастерской (0/1)
+try { db.exec('ALTER TABLE participants ADD COLUMN can_manage_acts INTEGER NOT NULL DEFAULT 0'); } catch { /* колонка уже есть */ }
+
 // Миграция: вложение к сообщению чата (картинка/файл)
 try { db.exec("ALTER TABLE chat_messages ADD COLUMN attachment_url TEXT NOT NULL DEFAULT ''"); } catch { /* колонка уже есть */ }
 try { db.exec("ALTER TABLE chat_messages ADD COLUMN attachment_type TEXT NOT NULL DEFAULT ''"); } catch { /* колонка уже есть */ }

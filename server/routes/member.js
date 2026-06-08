@@ -1,13 +1,19 @@
 const express = require('express');
 const bcrypt = require('bcryptjs');
 const db = require('../db');
-const { signAdmin, signMember, requireMember, ensureEventManager } = require('../middleware/auth');
+const {
+  signAdmin,
+  signMember,
+  requireMember,
+  ensureEventManager,
+  ensureActsManager
+} = require('../middleware/auth');
 const upload = require('../middleware/upload');
 
 const router = express.Router();
 
 const ME_COLS =
-  'id, name, callsign, role, bio, photo, model_url, joined_date, username, can_manage_events, is_admin';
+  'id, name, callsign, role, bio, photo, model_url, joined_date, username, can_manage_events, is_admin, can_manage_acts';
 
 /* ---------- Авторизация ---------- */
 router.post('/login', (req, res) => {
@@ -360,6 +366,70 @@ router.delete('/events/:id', requireMember, ensureEventManager, (req, res) => {
 router.get('/rules', requireMember, (req, res) => {
   const rows = db.prepare('SELECT slug, title, content FROM rules').all();
   res.json(rows);
+});
+
+/* ---------- Акты выполненных работ (мастер) ---------- */
+function parseAct(row) {
+  let items = [];
+  let photos = [];
+  try { items = JSON.parse(row.items || '[]'); } catch { items = []; }
+  try { photos = JSON.parse(row.photos || '[]'); } catch { photos = []; }
+  return { ...row, items, photos };
+}
+
+router.get('/acts', requireMember, ensureActsManager, (req, res) => {
+  const rows = db.prepare('SELECT * FROM repair_acts ORDER BY id DESC').all();
+  res.json(rows.map(parseAct));
+});
+
+router.post('/acts', requireMember, ensureActsManager, (req, res) => {
+  const client = String(req.body.client || '').trim();
+  const device = String(req.body.device || '').trim();
+  const note = String(req.body.note || '').trim();
+  const items = Array.isArray(req.body.items)
+    ? req.body.items
+        .map((it) => ({ text: String(it.text || '').trim(), done: !!it.done }))
+        .filter((it) => it.text)
+    : [];
+  const photos = Array.isArray(req.body.photos)
+    ? req.body.photos.filter((u) => typeof u === 'string' && u.startsWith('/uploads/'))
+    : [];
+  if (!device && !client && items.length === 0) {
+    return res.status(400).json({ error: 'Заполните хотя бы привод и пункты ремонта' });
+  }
+  const total = items.filter((it) => it.done).length;
+  const info = db
+    .prepare(
+      `INSERT INTO repair_acts (client, device, items, photos, note, total, created_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    )
+    .run(client, device, JSON.stringify(items), JSON.stringify(photos), note, total, new Date().toISOString());
+  res.status(201).json({ id: Number(info.lastInsertRowid) });
+});
+
+router.delete('/acts/:id', requireMember, ensureActsManager, (req, res) => {
+  const info = db.prepare('DELETE FROM repair_acts WHERE id = ?').run(req.params.id);
+  if (info.changes === 0) return res.status(404).json({ error: 'Акт не найден' });
+  res.json({ ok: true });
+});
+
+// Скачать акт в Word (.docx)
+router.get('/acts/:id/docx', requireMember, ensureActsManager, async (req, res) => {
+  const row = db.prepare('SELECT * FROM repair_acts WHERE id = ?').get(req.params.id);
+  if (!row) return res.status(404).json({ error: 'Акт не найден' });
+  try {
+    // eslint-disable-next-line global-require
+    const { buildActDocx } = require('../acts-docx');
+    const buf = await buildActDocx(parseAct(row));
+    res.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    );
+    res.setHeader('Content-Disposition', `attachment; filename="act-${row.id}.docx"`);
+    res.send(buf);
+  } catch (err) {
+    res.status(500).json({ error: 'Не удалось сформировать документ' });
+  }
 });
 
 module.exports = router;

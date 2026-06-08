@@ -85,6 +85,14 @@ export default function Cabinet() {
               Управление играми
             </NavLink>
           )}
+          {!!me?.can_manage_acts && (
+            <NavLink
+              to="/cabinet/acts"
+              className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+            >
+              Акты
+            </NavLink>
+          )}
           {!!me?.is_admin && (
             <button type="button" className="nav-link nav-link-btn" onClick={openAdmin}>
               ⚙ Админ-панель

@@ -2809,6 +2809,11 @@ a {
   border-radius: 8px;
   border: 1px solid var(--border);
 }
+.act-card-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
 
 /* Админ-галерея мастерской */
 .admin-works-grid {

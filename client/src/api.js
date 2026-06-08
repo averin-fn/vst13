@@ -112,10 +112,6 @@ export const api = {
   createWork: (data) =>
     request('/admin/workshop/works', { method: 'POST', auth: true, body: JSON.stringify(data) }),
   deleteWork: (id) => request(`/admin/workshop/works/${id}`, { method: 'DELETE', auth: true }),
-  getActs: () => request('/admin/acts', { auth: true }),
-  createAct: (data) =>
-    request('/admin/acts', { method: 'POST', auth: true, body: JSON.stringify(data) }),
-  deleteAct: (id) => request(`/admin/acts/${id}`, { method: 'DELETE', auth: true }),
 
   // ---- админ: настройки сайта ----
   updateSettings: (data) =>
@@ -220,6 +216,28 @@ export const api = {
       memberAuth: true,
       body: JSON.stringify({ endpoint })
     }),
+
+  // ---- акты выполненных работ (мастер) ----
+  getActs: () => request('/member/acts', { memberAuth: true }),
+  createAct: (data) =>
+    request('/member/acts', { method: 'POST', memberAuth: true, body: JSON.stringify(data) }),
+  deleteAct: (id) => request(`/member/acts/${id}`, { method: 'DELETE', memberAuth: true }),
+  downloadActDocx: async (id) => {
+    const token = getMemberToken();
+    const res = await fetch(`${BASE}/member/acts/${id}/docx`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    });
+    if (!res.ok) throw new Error('Не удалось сформировать документ');
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `Акт-${id}.docx`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  },
 
   // RSVP
   getMyRsvps: () => request('/member/rsvps', { memberAuth: true }),

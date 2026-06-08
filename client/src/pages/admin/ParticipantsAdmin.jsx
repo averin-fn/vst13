@@ -15,6 +15,7 @@ const EMPTY = {
   password: '',
   can_manage_events: false,
   is_admin: false,
+  can_manage_acts: false,
   squad: 0
 };
 
@@ -59,6 +60,7 @@ export default function ParticipantsAdmin() {
         password: '',
         can_manage_events: !!full.can_manage_events,
         is_admin: !!full.is_admin,
+        can_manage_acts: !!full.can_manage_acts,
         squad: full.squad || 0
       });
       setHadAccount(!!full.username);
@@ -202,6 +204,14 @@ export default function ParticipantsAdmin() {
             onChange={(e) => setForm({ ...form, is_admin: e.target.checked })}
           />
           <span>Администратор (доступ в админ-панель из личного кабинета)</span>
+        </label>
+        <label className="check-row">
+          <input
+            type="checkbox"
+            checked={form.can_manage_acts}
+            onChange={(e) => setForm({ ...form, can_manage_acts: e.target.checked })}
+          />
+          <span>Доступ к разделу «Акты» (мастер)</span>
         </label>
 
         <h3 className="admin-form-title">Аккаунт личного кабинета</h3>

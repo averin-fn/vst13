@@ -11,7 +11,9 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
+    "docx": "^9.7.1",
     "express": "^4.21.0",
+    "image-size": "^2.0.2",
     "jsonwebtoken": "^9.0.2",
     "multer": "^2.0.0",
     "web-push": "^3.6.7",

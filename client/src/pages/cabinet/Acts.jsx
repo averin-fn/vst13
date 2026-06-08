@@ -10,7 +10,6 @@ function formatDate(value) {
 
 const EMPTY = { client: '', device: '', note: '' };
 
-// Типовой чек-лист операций — мастер отмечает выполненные
 const DEFAULT_ITEMS = [
   'Разборка гирбокса',
   'Чистка деталей',
@@ -22,10 +21,9 @@ const DEFAULT_ITEMS = [
   'Сборка',
   'Тест стрельбой, замер скорости (FPS)'
 ];
-
 const freshItems = () => DEFAULT_ITEMS.map((text) => ({ text, done: false }));
 
-export default function ActsAdmin() {
+export default function CabinetActs() {
   const [acts, setActs] = useState([]);
   const [form, setForm] = useState(EMPTY);
   const [items, setItems] = useState(freshItems());
@@ -33,6 +31,7 @@ export default function ActsAdmin() {
   const [uploading, setUploading] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [downloading, setDownloading] = useState(null);
 
   const load = () => api.getActs().then(setActs).catch(() => {});
   useEffect(() => {
@@ -40,7 +39,6 @@ export default function ActsAdmin() {
   }, []);
 
   const setField = (f) => (e) => setForm({ ...form, [f]: e.target.value });
-
   const toggleDone = (i) => {
     const next = items.slice();
     next[i] = { ...next[i], done: !next[i].done };
@@ -62,7 +60,7 @@ export default function ActsAdmin() {
     setError('');
     try {
       for (const file of files) {
-        const { url } = await api.upload(file);
+        const { url } = await api.memberUpload(file);
         setPhotos((prev) => [...prev, url]);
       }
     } catch (err) {
@@ -85,9 +83,7 @@ export default function ActsAdmin() {
         client: form.client,
         device: form.device,
         note: form.note,
-        items: items
-          .filter((it) => it.text.trim())
-          .map((it) => ({ text: it.text.trim(), done: it.done })),
+        items: items.filter((it) => it.text.trim()).map((it) => ({ text: it.text.trim(), done: it.done })),
         photos
       });
       setForm(EMPTY);
@@ -111,10 +107,21 @@ export default function ActsAdmin() {
     }
   };
 
+  const downloadDocx = async (a) => {
+    setDownloading(a.id);
+    try {
+      await api.downloadActDocx(a.id);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDownloading(null);
+    }
+  };
+
   return (
     <div className="admin-page">
       <h1 className="page-title">Акты выполненных работ</h1>
-      <p className="page-subtitle">Чек-лист по ремонту и тюнингу привода: отметьте выполненные пункты и приложите фото.</p>
+      <p className="page-subtitle">Чек-лист по ремонту и тюнингу привода: отметьте выполненные пункты, приложите фото, выгрузите акт в Word.</p>
 
       <form className="card admin-form" onSubmit={save}>
         <h3 className="admin-form-title">Новый акт</h3>
@@ -145,12 +152,7 @@ export default function ActsAdmin() {
                 onChange={setText(i)}
                 placeholder="Операция (напр. замена пружины M120)"
               />
-              <button
-                type="button"
-                className="act-item-del"
-                onClick={() => removeItem(i)}
-                aria-label="Удалить пункт"
-              >
+              <button type="button" className="act-item-del" onClick={() => removeItem(i)} aria-label="Удалить пункт">
                 ✕
               </button>
             </div>
@@ -206,9 +208,7 @@ export default function ActsAdmin() {
 
               {a.items.length > 0 && (
                 <>
-                  <div className="act-progress">
-                    Выполнено {done} из {a.items.length}
-                  </div>
+                  <div className="act-progress">Выполнено {done} из {a.items.length}</div>
                   <ul className="act-checklist-view">
                     {a.items.map((it, i) => (
                       <li key={i} className={it.done ? 'done' : 'pending'}>
@@ -231,9 +231,14 @@ export default function ActsAdmin() {
                 </div>
               )}
 
-              <button className="btn btn-danger btn-sm" onClick={() => remove(a)}>
-                Удалить
-              </button>
+              <div className="act-card-actions">
+                <button className="btn btn-primary btn-sm" onClick={() => downloadDocx(a)} disabled={downloading === a.id}>
+                  {downloading === a.id ? 'Готовлю…' : '⬇ Word'}
+                </button>
+                <button className="btn btn-danger btn-sm" onClick={() => remove(a)}>
+                  Удалить
+                </button>
+              </div>
             </article>
           );
         })}
