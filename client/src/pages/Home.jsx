@@ -26,18 +26,18 @@ export default function Home() {
       </section>
 
       <section className="features">
-        <div className="feature">
-          <h3>Тактика</h3>
-          <p>Работа в группах, отлаженная связь и продуманные действия на полигоне.</p>
-        </div>
-        <div className="feature">
-          <h3>Снаряжение</h3>
-          <p>Помогаем новичкам с экипировкой и подбором первого привода.</p>
-        </div>
-        <div className="feature">
-          <h3>Команда</h3>
-          <p>Дружный коллектив, регулярные тренировки и совместные выезды.</p>
-        </div>
+        <Link to="/participants" className="feature">
+          <h3>Участники</h3>
+          <p>Состав команды по отрядам: командиры, бойцы и их досье.</p>
+        </Link>
+        <Link to="/calendar" className="feature">
+          <h3>Календарь</h3>
+          <p>Расписание игр и тренировок, голосование за участие.</p>
+        </Link>
+        <Link to="/workshop" className="feature">
+          <h3>Мастерская</h3>
+          <p>Ремонт и тюнинг приводов, заявки и примеры работ.</p>
+        </Link>
       </section>
 
       <section className="cta-block">
