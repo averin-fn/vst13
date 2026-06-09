@@ -2046,6 +2046,14 @@ a {
   white-space: pre-wrap;
   word-break: break-word;
 }
+.chat-link {
+  color: var(--accent-2);
+  text-decoration: underline;
+  word-break: break-all;
+}
+.chat-link:hover {
+  color: var(--tan);
+}
 .chat-form {
   display: flex;
   gap: 10px;

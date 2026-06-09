@@ -29,6 +29,35 @@ function formatTime(value) {
   return d.toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
+// Превращаем URL в тексте сообщения в кликабельные ссылки
+const URL_RE = /(https?:\/\/[^\s]+|www\.[^\s]+)/gi;
+function linkify(text) {
+  const out = [];
+  let last = 0;
+  let m;
+  URL_RE.lastIndex = 0;
+  while ((m = URL_RE.exec(text)) !== null) {
+    if (m.index > last) out.push(text.slice(last, m.index));
+    let url = m[0];
+    let trail = '';
+    const t = url.match(/[.,!?)»"':;]+$/);
+    if (t) {
+      trail = t[0];
+      url = url.slice(0, -trail.length);
+    }
+    const href = url.startsWith('http') ? url : `https://${url}`;
+    out.push(
+      <a key={`${m.index}`} href={href} target="_blank" rel="noreferrer noopener" className="chat-link">
+        {url}
+      </a>
+    );
+    if (trail) out.push(trail);
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) out.push(text.slice(last));
+  return out;
+}
+
 export default function CabinetChat() {
   const { me, refreshUnread } = useOutletContext();
   const [channel, setChannel] = useState('general');
@@ -178,9 +207,7 @@ export default function CabinetChat() {
     }
   };
 
-  const pickFile = async (e) => {
-    const file = e.target.files?.[0];
-    e.target.value = '';
+  const uploadAttachment = async (file) => {
     if (!file) return;
     setError('');
     setAttaching(true);
@@ -192,6 +219,30 @@ export default function CabinetChat() {
       setError(err.message || 'Не удалось загрузить файл');
     } finally {
       setAttaching(false);
+    }
+  };
+
+  const pickFile = async (e) => {
+    const file = e.target.files?.[0];
+    e.target.value = '';
+    await uploadAttachment(file);
+  };
+
+  // Вставка картинки из буфера (Ctrl+V) прямо в поле ввода
+  const onPaste = (e) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (const it of items) {
+      if (it.type && it.type.startsWith('image/')) {
+        const blob = it.getAsFile();
+        if (blob) {
+          e.preventDefault();
+          const ext = (it.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+          const named = new File([blob], `paste-${Date.now()}.${ext}`, { type: it.type });
+          uploadAttachment(named);
+        }
+        return;
+      }
     }
   };
 
@@ -354,7 +405,7 @@ export default function CabinetChat() {
                     <span className="chat-msg-name">{m.name}</span>
                     <span className="chat-msg-time">{formatTime(m.created_at)}</span>
                   </div>
-                  {m.message && <div className="chat-msg-body">{m.message}</div>}
+                  {m.message && <div className="chat-msg-body">{linkify(m.message)}</div>}
                   {m.attachment_url &&
                     (m.attachment_type === 'image' ? (
                       <a
@@ -460,6 +511,7 @@ export default function CabinetChat() {
               type="text"
               value={draft}
               onChange={onDraftChange}
+              onPaste={onPaste}
               placeholder={`Сообщение в #${CHANNELS.find((c) => c.id === channel)?.label || channel}…`}
               maxLength={1000}
               autoFocus
