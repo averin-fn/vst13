@@ -6,6 +6,7 @@ const links = [
   { to: '/admin/events', label: 'Мероприятия' },
   { to: '/admin/feedback', label: 'Обратная связь' },
   { to: '/admin/workshop', label: 'Мастерская' },
+  { to: '/admin/planner', label: 'Планировщик' },
   { to: '/admin/rules', label: 'Правила' },
   { to: '/admin/settings', label: 'Оформление' }
 ];

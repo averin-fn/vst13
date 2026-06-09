@@ -113,6 +113,11 @@ export const api = {
     request('/admin/workshop/works', { method: 'POST', auth: true, body: JSON.stringify(data) }),
   deleteWork: (id) => request(`/admin/workshop/works/${id}`, { method: 'DELETE', auth: true }),
 
+  // ---- админ: планировщик ----
+  getPlanner: () => request('/admin/planner', { auth: true }),
+  savePlanner: (board) =>
+    request('/admin/planner', { method: 'PUT', auth: true, body: JSON.stringify(board) }),
+
   // ---- админ: настройки сайта ----
   updateSettings: (data) =>
     request('/admin/settings', { method: 'PUT', auth: true, body: JSON.stringify(data) }),

@@ -277,6 +277,27 @@ router.delete('/workshop/works/:id', (req, res) => {
 
 // (Акты перенесены в кабинет — /api/member/acts, доступ по флагу can_manage_acts)
 
+/* ---------------- Планировщик (доска расстановки команды) ---------------- */
+router.get('/planner', (req, res) => {
+  const row = db.prepare("SELECT value FROM settings WHERE key = 'planner_board'").get();
+  let board = { groups: [] };
+  try {
+    if (row && row.value) board = JSON.parse(row.value);
+  } catch {
+    board = { groups: [] };
+  }
+  res.json(board);
+});
+
+router.put('/planner', (req, res) => {
+  const board =
+    req.body && Array.isArray(req.body.groups) ? { groups: req.body.groups } : { groups: [] };
+  db.prepare(
+    "INSERT INTO settings (key, value) VALUES ('planner_board', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+  ).run(JSON.stringify(board));
+  res.json({ ok: true });
+});
+
 /* ---------------- Настройки сайта ---------------- */
 const ALLOWED_SETTINGS = ['header_image'];
 
