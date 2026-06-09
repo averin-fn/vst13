@@ -26,10 +26,6 @@ export default function Home() {
       </section>
 
       <section className="features">
-        <Link to="/participants" className="feature">
-          <h3>Участники</h3>
-          <p>Состав команды по отрядам: командиры, бойцы и их досье.</p>
-        </Link>
         <Link to="/calendar" className="feature">
           <h3>Календарь</h3>
           <p>Расписание игр и тренировок, голосование за участие.</p>

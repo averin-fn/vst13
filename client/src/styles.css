@@ -1095,25 +1095,11 @@ a {
     margin: 0;
     border: none;
   }
-  /* Кабинет/админка: меню переносится рядами (как раньше) */
+  /* Меню переносится рядами (кабинет/админка + публичный «Личный кабинет») */
   .sidebar-nav {
     flex-direction: row;
     flex-wrap: wrap;
     margin-left: auto;
-  }
-  /* Публичная навигация: гамбургер вместо списка ссылок */
-  .nav-toggle {
-    display: inline-flex;
-  }
-  .site .sidebar-nav {
-    display: none;
-    flex-basis: 100%;
-    flex-direction: column;
-    gap: 6px;
-    margin: 4px 0 0;
-  }
-  .site .sidebar-nav.open {
-    display: flex;
   }
   .sidebar-foot {
     display: none;
