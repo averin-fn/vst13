@@ -53,10 +53,10 @@ export default function Cabinet() {
   return (
     <div className="app">
       <aside className="sidebar">
-        <div className="sidebar-brand">
+        <Link to="/" className="sidebar-brand" title="На главную">
           <span className="sidebar-logo">⌖</span>
           <span className="sidebar-name">ВСТ13</span>
-        </div>
+        </Link>
         <div className="sidebar-tag">Личный кабинет</div>
         {me && (
           <div className="cabinet-me">
