@@ -2130,6 +2130,10 @@ a {
 .chat-att-image {
   display: block;
   margin-top: 6px;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
 }
 .chat-att-image img {
   max-width: 220px;
@@ -2137,6 +2141,53 @@ a {
   border-radius: 10px;
   border: 1px solid var(--border);
   display: block;
+}
+
+/* Встроенный просмотрщик картинок (вместо открытия новой вкладки) */
+.chat-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.88);
+  cursor: zoom-out;
+}
+.chat-lightbox img {
+  max-width: 100%;
+  max-height: 80vh;
+  object-fit: contain;
+  border-radius: 8px;
+  cursor: default;
+}
+.chat-lightbox-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+.chat-lightbox-close:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+.chat-lightbox-open {
+  color: #fff;
+  text-decoration: underline;
+  font-size: 0.9rem;
+  opacity: 0.85;
+}
+.chat-lightbox-open:hover {
+  opacity: 1;
 }
 .chat-att-file {
   display: inline-flex;

@@ -84,6 +84,7 @@ export default function CabinetChat() {
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [reactFor, setReactFor] = useState(null); // id сообщения для попапа реакций
   const [replyTo, setReplyTo] = useState(null); // { id, callsign, text } — на что отвечаем
+  const [lightbox, setLightbox] = useState(null); // { url, name } — открытая картинка
 
   const fileInputRef = useRef(null);
   const scrollRef = useRef(null);
@@ -296,6 +297,38 @@ export default function CabinetChat() {
     setTimeout(() => el.classList.remove('chat-msg-flash'), 1200);
   };
 
+  // Открыть картинку во встроенном просмотрщике.
+  // Кладём запись в историю, чтобы кнопка «Назад» (особенно в установленном PWA)
+  // закрывала просмотрщик, а не выходила из приложения.
+  const openLightbox = (url, name) => {
+    window.history.pushState({ chatLightbox: true }, '');
+    setLightbox({ url, name });
+  };
+
+  const closeLightbox = () => {
+    // Если наша запись ещё в истории — откатываемся (это вызовет popstate и закрытие)
+    if (window.history.state?.chatLightbox) {
+      window.history.back();
+    } else {
+      setLightbox(null);
+    }
+  };
+
+  // «Назад» (popstate) и Esc закрывают просмотрщик
+  useEffect(() => {
+    const onPop = () => setLightbox(null);
+    const onKey = (e) => {
+      if (e.key === 'Escape') closeLightbox();
+    };
+    window.addEventListener('popstate', onPop);
+    window.addEventListener('keydown', onKey);
+    return () => {
+      window.removeEventListener('popstate', onPop);
+      window.removeEventListener('keydown', onKey);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Вставка смайла в поле ввода (в позицию курсора)
   const insertEmoji = (emoji) => {
     const el = inputRef.current;
@@ -456,14 +489,13 @@ export default function CabinetChat() {
                   {m.message && <div className="chat-msg-body">{linkify(m.message)}</div>}
                   {m.attachment_url &&
                     (m.attachment_type === 'image' ? (
-                      <a
-                        href={m.attachment_url}
-                        target="_blank"
-                        rel="noreferrer"
+                      <button
+                        type="button"
                         className="chat-att-image"
+                        onClick={() => openLightbox(m.attachment_url, m.attachment_name)}
                       >
                         <img src={m.attachment_url} alt={m.attachment_name || 'изображение'} />
-                      </a>
+                      </button>
                     ) : (
                       <a
                         href={m.attachment_url}
@@ -599,6 +631,29 @@ export default function CabinetChat() {
           {error && <p className="notice notice-error">{error}</p>}
         </div>
       </div>
+
+      {lightbox && (
+        <div className="chat-lightbox" onClick={closeLightbox}>
+          <button type="button" className="chat-lightbox-close" onClick={closeLightbox} aria-label="Закрыть">
+            ✕
+          </button>
+          <img
+            src={lightbox.url}
+            alt={lightbox.name || 'изображение'}
+            onClick={(e) => e.stopPropagation()}
+          />
+          <a
+            href={lightbox.url}
+            target="_blank"
+            rel="noreferrer"
+            download
+            className="chat-lightbox-open"
+            onClick={(e) => e.stopPropagation()}
+          >
+            Открыть оригинал
+          </a>
+        </div>
+      )}
     </div>
   );
 }
