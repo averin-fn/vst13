@@ -58,6 +58,15 @@ function linkify(text) {
   return out;
 }
 
+// Краткий текст сообщения для цитаты-ответа (текст или плашка вложения)
+function msgSnippet(message, attType) {
+  const t = (message || '').trim();
+  if (t) return t;
+  if (attType === 'image') return '📷 Фото';
+  if (attType === 'file') return '📎 Файл';
+  return '';
+}
+
 export default function CabinetChat() {
   const { me, refreshUnread } = useOutletContext();
   const [channel, setChannel] = useState('general');
@@ -74,6 +83,7 @@ export default function CabinetChat() {
   const [iosHint, setIosHint] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [reactFor, setReactFor] = useState(null); // id сообщения для попапа реакций
+  const [replyTo, setReplyTo] = useState(null); // { id, callsign, text } — на что отвечаем
 
   const fileInputRef = useRef(null);
   const scrollRef = useRef(null);
@@ -117,6 +127,7 @@ export default function CabinetChat() {
     setMessages([]);
     setTyping('');
     setError('');
+    setReplyTo(null);
     refresh();
     const t = setInterval(refresh, 15000);
     return () => clearInterval(t);
@@ -253,18 +264,36 @@ export default function CabinetChat() {
     setSending(true);
     setError('');
     const att = pendingAtt;
+    const reply = replyTo;
     setDraft('');
     setPendingAtt(null);
+    setReplyTo(null);
     try {
-      await api.sendChatMessage(channel, text, att);
+      await api.sendChatMessage(channel, text, att, reply?.id || 0);
     } catch (err) {
       setError(err.message);
       setDraft(text);
       setPendingAtt(att);
+      setReplyTo(reply);
     } finally {
       setSending(false);
       inputRef.current?.focus();
     }
+  };
+
+  // Начать ответ на сообщение
+  const startReply = (m) => {
+    setReplyTo({ id: m.id, callsign: m.callsign, text: msgSnippet(m.message, m.attachment_type) });
+    inputRef.current?.focus();
+  };
+
+  // Прокрутить к процитированному сообщению и подсветить его
+  const goToMessage = (id) => {
+    const el = scrollRef.current?.querySelector(`[data-mid="${id}"]`);
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    el.classList.add('chat-msg-flash');
+    setTimeout(() => el.classList.remove('chat-msg-flash'), 1200);
   };
 
   // Вставка смайла в поле ввода (в позицию курсора)
@@ -399,12 +428,31 @@ export default function CabinetChat() {
             {messages.map((m) => {
               const own = me && m.participant_id === me.id;
               return (
-                <div key={m.id} className={`chat-msg ${own ? 'chat-msg-own' : ''}`}>
+                <div key={m.id} data-mid={m.id} className={`chat-msg ${own ? 'chat-msg-own' : ''}`}>
                   <div className="chat-msg-head">
                     <span className="chat-msg-callsign">«{m.callsign}»</span>
                     <span className="chat-msg-name">{m.name}</span>
                     <span className="chat-msg-time">{formatTime(m.created_at)}</span>
                   </div>
+                  {m.reply_to_id > 0 && (
+                    <button
+                      type="button"
+                      className="chat-reply-quote"
+                      onClick={() => goToMessage(m.reply_to_id)}
+                      title="Перейти к сообщению"
+                    >
+                      {m.reply_callsign ? (
+                        <>
+                          <span className="chat-reply-quote-name">«{m.reply_callsign}»</span>
+                          <span className="chat-reply-quote-text">
+                            {msgSnippet(m.reply_message, m.reply_att_type) || '…'}
+                          </span>
+                        </>
+                      ) : (
+                        <span className="chat-reply-quote-text">сообщение удалено</span>
+                      )}
+                    </button>
+                  )}
                   {m.message && <div className="chat-msg-body">{linkify(m.message)}</div>}
                   {m.attachment_url &&
                     (m.attachment_type === 'image' ? (
@@ -447,6 +495,14 @@ export default function CabinetChat() {
                     >
                       🙂+
                     </button>
+                    <button
+                      type="button"
+                      className="chat-react-add"
+                      onClick={() => startReply(m)}
+                      title="Ответить"
+                    >
+                      ↩ Ответить
+                    </button>
                     {reactFor === m.id && (
                       <div className="chat-react-pop">
                         {QUICK_REACTIONS.map((e) => (
@@ -463,6 +519,19 @@ export default function CabinetChat() {
           </div>
 
           <div className="chat-typing">{typing ? `«${typing}» печатает…` : ''}</div>
+
+          {replyTo && (
+            <div className="chat-reply-bar">
+              <span className="chat-reply-bar-icon">↩</span>
+              <div className="chat-reply-bar-text">
+                <span className="chat-reply-bar-name">Ответ «{replyTo.callsign}»</span>
+                <span className="chat-reply-bar-snippet">{replyTo.text || 'вложение'}</span>
+              </div>
+              <button type="button" onClick={() => setReplyTo(null)} aria-label="Отменить ответ">
+                ✕
+              </button>
+            </div>
+          )}
 
           {pendingAtt && (
             <div className="chat-att-pending">

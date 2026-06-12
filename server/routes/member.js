@@ -104,7 +104,13 @@ function normalizeChannel(value) {
 }
 
 const CHAT_COLS = `m.id, m.channel, m.message, m.created_at, m.participant_id,
-  m.attachment_url, m.attachment_type, m.attachment_name, p.callsign, p.name`;
+  m.attachment_url, m.attachment_type, m.attachment_name, p.callsign, p.name,
+  m.reply_to_id,
+  rp.callsign AS reply_callsign, rm.message AS reply_message, rm.attachment_type AS reply_att_type`;
+
+// LEFT JOIN к родительскому сообщению (для ответа-цитаты)
+const CHAT_REPLY_JOIN = `LEFT JOIN chat_messages rm ON rm.id = m.reply_to_id
+  LEFT JOIN participants rp ON rp.id = rm.participant_id`;
 
 // Разрешённый набор реакций
 const ALLOWED_REACTIONS = ['👍', '❤️', '😂', '🔥', '👏', '😮', '🫡', '✅'];
@@ -144,6 +150,7 @@ router.get('/chat', requireMember, (req, res) => {
       `SELECT ${CHAT_COLS}
        FROM chat_messages m
        JOIN participants p ON p.id = m.participant_id
+       ${CHAT_REPLY_JOIN}
        WHERE m.channel = ? AND m.id > ?
        ORDER BY m.id ASC
        LIMIT 200`
@@ -198,13 +205,22 @@ router.post('/chat', requireMember, (req, res) => {
   if (!message && !att.url) return res.status(400).json({ error: 'Пустое сообщение' });
   if (message.length > 1000) return res.status(400).json({ error: 'Слишком длинное сообщение' });
   const channel = normalizeChannel(req.body.channel);
+
+  // Ответ на сообщение: принимаем только id из того же канала
+  let replyToId = 0;
+  const replyTo = Number(req.body.replyTo) || 0;
+  if (replyTo) {
+    const parent = db.prepare('SELECT id, channel FROM chat_messages WHERE id = ?').get(replyTo);
+    if (parent && parent.channel === channel) replyToId = parent.id;
+  }
+
   const info = db
     .prepare(
       `INSERT INTO chat_messages
-       (participant_id, channel, message, created_at, attachment_url, attachment_type, attachment_name)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
+       (participant_id, channel, message, created_at, attachment_url, attachment_type, attachment_name, reply_to_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
     )
-    .run(req.member.participantId, channel, message, new Date().toISOString(), att.url, att.type, att.name);
+    .run(req.member.participantId, channel, message, new Date().toISOString(), att.url, att.type, att.name, replyToId);
   const id = Number(info.lastInsertRowid);
 
   // Мгновенная рассылка через WebSocket
@@ -212,6 +228,7 @@ router.post('/chat', requireMember, (req, res) => {
     .prepare(
       `SELECT ${CHAT_COLS}
        FROM chat_messages m JOIN participants p ON p.id = m.participant_id
+       ${CHAT_REPLY_JOIN}
        WHERE m.id = ?`
     )
     .get(id);

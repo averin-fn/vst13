@@ -187,11 +187,11 @@ export const api = {
   // чат
   getChat: (channel = 'general', since = 0) =>
     request(`/member/chat?channel=${encodeURIComponent(channel)}&since=${since}`, { memberAuth: true }),
-  sendChatMessage: (channel, message, attachment = null) =>
+  sendChatMessage: (channel, message, attachment = null, replyTo = 0) =>
     request('/member/chat', {
       method: 'POST',
       memberAuth: true,
-      body: JSON.stringify({ channel, message, attachment })
+      body: JSON.stringify({ channel, message, attachment, replyTo })
     }),
   toggleReaction: (messageId, emoji) =>
     request(`/member/chat/${messageId}/reactions`, {
