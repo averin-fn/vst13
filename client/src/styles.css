@@ -3117,3 +3117,39 @@ a {
   font: inherit;
 }
 
+/* Ручное добавление бойца в пул «Не распределены» */
+.plan-add-person {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+}
+.plan-add-person input {
+  flex: 1;
+  min-width: 0;
+  background: var(--bg-input);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: var(--text);
+  font: inherit;
+}
+/* Боец, добавленный вручную — пунктирная рамка + кнопка удаления */
+.plan-chip-manual {
+  border-style: dashed;
+  border-color: var(--accent-2);
+}
+.plan-chip-del {
+  margin-left: 6px;
+  border: none;
+  background: none;
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 0.8rem;
+  line-height: 1;
+  padding: 0 2px;
+}
+.plan-chip-del:hover {
+  color: #fff;
+}
+

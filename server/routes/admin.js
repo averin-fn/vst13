@@ -290,8 +290,12 @@ router.get('/planner', (req, res) => {
 });
 
 router.put('/planner', (req, res) => {
-  const board =
-    req.body && Array.isArray(req.body.groups) ? { groups: req.body.groups } : { groups: [] };
+  const b = req.body || {};
+  const board = {
+    groups: Array.isArray(b.groups) ? b.groups : [],
+    // вручную добавленные люди (гости/из других команд), которых нет в участниках
+    extras: Array.isArray(b.extras) ? b.extras : []
+  };
   db.prepare(
     "INSERT INTO settings (key, value) VALUES ('planner_board', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
   ).run(JSON.stringify(board));

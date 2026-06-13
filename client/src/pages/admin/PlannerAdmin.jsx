@@ -5,11 +5,13 @@ const uid = () => Math.random().toString(36).slice(2, 9);
 
 export default function PlannerAdmin() {
   const [participants, setParticipants] = useState([]);
+  const [extras, setExtras] = useState([]); // вручную добавленные люди (нет в участниках)
   const [groups, setGroups] = useState([]);
   const [status, setStatus] = useState('loading');
   const [saved, setSaved] = useState(true);
   const [selected, setSelected] = useState(null); // id бойца для тап-переноса
   const [newGroup, setNewGroup] = useState('');
+  const [newPerson, setNewPerson] = useState(''); // позывной ручного бойца
   const saveTimer = useRef(null);
   const firstLoad = useRef(true);
 
@@ -18,7 +20,9 @@ export default function PlannerAdmin() {
     Promise.all([api.getParticipants(), api.getPlanner()])
       .then(([people, board]) => {
         setParticipants(people);
-        const valid = new Set(people.map((p) => p.id));
+        const extraList = (board.extras || []).filter((x) => x && x.id);
+        setExtras(extraList);
+        const valid = new Set([...people.map((p) => p.id), ...extraList.map((x) => x.id)]);
         // чистим устаревшие id (удалённые бойцы)
         const clean = (board.groups || []).map((g) => ({
           id: g.id || uid(),
@@ -45,16 +49,19 @@ export default function PlannerAdmin() {
     setSaved(false);
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
-      api.savePlanner({ groups }).then(() => setSaved(true)).catch(() => {});
+      api.savePlanner({ groups, extras }).then(() => setSaved(true)).catch(() => {});
     }, 600);
     return () => clearTimeout(saveTimer.current);
-  }, [groups]);
+  }, [groups, extras]);
+
+  // Все люди на доске: зарегистрированные участники + добавленные вручную
+  const people = useMemo(() => [...participants, ...extras], [participants, extras]);
 
   const byId = useMemo(() => {
     const m = new Map();
-    participants.forEach((p) => m.set(p.id, p));
+    people.forEach((p) => m.set(p.id, p));
     return m;
-  }, [participants]);
+  }, [people]);
 
   const placed = useMemo(() => {
     const s = new Set();
@@ -65,7 +72,7 @@ export default function PlannerAdmin() {
     return s;
   }, [groups]);
 
-  const pool = participants.filter((p) => !placed.has(p.id));
+  const pool = people.filter((p) => !placed.has(p.id));
 
   // Переместить бойца в цель: 'pool' | {groupId} | {groupId, subId}
   const moveMember = (memberId, target) => {
@@ -109,9 +116,13 @@ export default function PlannerAdmin() {
     e.dataTransfer.setData('text/plain', String(memberId));
     e.dataTransfer.effectAllowed = 'move';
   };
+  // id участника — число, ручного бойца — строка вида "x_abc"
+  const parseId = (raw) => (/^x_/.test(raw) ? raw : Number(raw));
   const onDrop = (e, target) => {
     e.preventDefault();
-    const id = Number(e.dataTransfer.getData('text/plain'));
+    const raw = e.dataTransfer.getData('text/plain');
+    if (!raw) return;
+    const id = parseId(raw);
     if (id) moveMember(id, target);
   };
   const allowDrop = (e) => e.preventDefault();
@@ -162,21 +173,55 @@ export default function PlannerAdmin() {
     );
   };
 
+  // Добавить бойца вручную (гость / из другой команды) в «Не распределены»
+  const addPerson = () => {
+    const callsign = newPerson.trim();
+    if (!callsign) return;
+    setExtras([...extras, { id: `x_${uid()}`, callsign, name: callsign, manual: true }]);
+    setNewPerson('');
+  };
+  // Удалить ручного бойца с доски целиком (из пула и из всех групп)
+  const removePerson = (memberId) => {
+    setExtras(extras.filter((x) => x.id !== memberId));
+    setGroups((prev) =>
+      prev.map((g) => ({
+        ...g,
+        members: g.members.filter((x) => x !== memberId),
+        subgroups: g.subgroups.map((s) => ({ ...s, members: s.members.filter((x) => x !== memberId) }))
+      }))
+    );
+    if (selected === memberId) setSelected(null);
+  };
+
   const Chip = ({ id }) => {
     const p = byId.get(id);
     if (!p) return null;
+    const isManual = typeof id === 'string';
     return (
       <span
-        className={`plan-chip ${selected === id ? 'selected' : ''}`}
+        className={`plan-chip ${selected === id ? 'selected' : ''} ${isManual ? 'plan-chip-manual' : ''}`}
         draggable
         onDragStart={(e) => onDragStart(e, id)}
         onClick={(e) => {
           e.stopPropagation();
           onChipClick(id);
         }}
-        title={p.name}
+        title={isManual ? `${p.name} (добавлен вручную)` : p.name}
       >
         «{p.callsign}»
+        {isManual && (
+          <button
+            type="button"
+            className="plan-chip-del"
+            onClick={(e) => {
+              e.stopPropagation();
+              removePerson(id);
+            }}
+            title="Убрать бойца"
+          >
+            ✕
+          </button>
+        )}
       </span>
     );
   };
@@ -206,6 +251,17 @@ export default function PlannerAdmin() {
               <Chip key={p.id} id={p.id} />
             ))}
             {pool.length === 0 && <span className="plan-empty">Все распределены</span>}
+          </div>
+          <div className="plan-add-person" onClick={(e) => e.stopPropagation()}>
+            <input
+              value={newPerson}
+              onChange={(e) => setNewPerson(e.target.value)}
+              placeholder="Позывной бойца"
+              onKeyDown={(e) => e.key === 'Enter' && addPerson()}
+            />
+            <button type="button" className="btn btn-primary btn-sm" onClick={addPerson}>
+              + Боец
+            </button>
           </div>
         </div>
 
