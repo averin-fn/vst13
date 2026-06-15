@@ -101,6 +101,8 @@ export const api = {
   updateEvent: (id, data) =>
     request(`/admin/events/${id}`, { method: 'PUT', auth: true, body: JSON.stringify(data) }),
   deleteEvent: (id) => request(`/admin/events/${id}`, { method: 'DELETE', auth: true }),
+  setEventRoster: (id, roster) =>
+    request(`/admin/events/${id}/roster`, { method: 'PUT', auth: true, body: JSON.stringify({ roster }) }),
 
   // ---- админ: обратная связь ----
   getFeedback: () => request('/admin/feedback', { auth: true }),

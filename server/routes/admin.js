@@ -218,6 +218,16 @@ router.delete('/events/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+// Прикрепить расстановку (снимок из планировщика) к мероприятию.
+// Пустой/отсутствующий roster — очищает расстановку.
+router.put('/events/:id/roster', (req, res) => {
+  const r = req.body && req.body.roster;
+  const roster = r && Array.isArray(r.groups) && r.groups.length ? JSON.stringify({ groups: r.groups }) : '';
+  const info = db.prepare('UPDATE events SET roster = ? WHERE id = ?').run(roster, req.params.id);
+  if (info.changes === 0) return res.status(404).json({ error: 'Мероприятие не найдено' });
+  res.json({ ok: true });
+});
+
 // Кто отметился по конкретному мероприятию (для админа)
 router.get('/events/:id/rsvps', (req, res) => {
   const rows = db
@@ -292,7 +302,6 @@ router.get('/planner', (req, res) => {
 router.put('/planner', (req, res) => {
   const b = req.body || {};
   const board = {
-    title: typeof b.title === 'string' ? b.title.slice(0, 200) : '',
     groups: Array.isArray(b.groups) ? b.groups : [],
     // вручную добавленные люди (гости/из других команд), которых нет в участниках
     extras: Array.isArray(b.extras) ? b.extras : []

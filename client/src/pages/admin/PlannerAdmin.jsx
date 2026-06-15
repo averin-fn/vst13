@@ -7,7 +7,8 @@ export default function PlannerAdmin() {
   const [participants, setParticipants] = useState([]);
   const [extras, setExtras] = useState([]); // вручную добавленные люди (нет в участниках)
   const [groups, setGroups] = useState([]);
-  const [title, setTitle] = useState(''); // название игры
+  const [events, setEvents] = useState([]); // мероприятия для выбора
+  const [eventId, setEventId] = useState(''); // выбранное мероприятие
   const [status, setStatus] = useState('loading');
   const [saved, setSaved] = useState(true);
   const [selected, setSelected] = useState(null); // id бойца для тап-переноса
@@ -20,10 +21,10 @@ export default function PlannerAdmin() {
 
   // Загрузка участников + доски
   useEffect(() => {
-    Promise.all([api.getParticipants(), api.getPlanner()])
-      .then(([people, board]) => {
+    Promise.all([api.getParticipants(), api.getPlanner(), api.getEvents()])
+      .then(([people, board, evs]) => {
         setParticipants(people);
-        setTitle(board.title || '');
+        setEvents(evs || []);
         const extraList = (board.extras || []).filter((x) => x && x.id);
         setExtras(extraList);
         const valid = new Set([...people.map((p) => p.id), ...extraList.map((x) => x.id)]);
@@ -53,10 +54,10 @@ export default function PlannerAdmin() {
     setSaved(false);
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
-      api.savePlanner({ title, groups, extras }).then(() => setSaved(true)).catch(() => {});
+      api.savePlanner({ groups, extras }).then(() => setSaved(true)).catch(() => {});
     }, 600);
     return () => clearTimeout(saveTimer.current);
-  }, [title, groups, extras]);
+  }, [groups, extras]);
 
   // Все люди на доске: зарегистрированные участники + добавленные вручную
   const people = useMemo(() => [...participants, ...extras], [participants, extras]);
@@ -197,47 +198,38 @@ export default function PlannerAdmin() {
     if (selected === memberId) setSelected(null);
   };
 
-  // Текст расстановки для описания мероприятия
+  // Снимок расстановки для мероприятия (резолвим id → позывной/имя; только размещённые бойцы)
   const buildRoster = () => {
-    const name = (id) => {
+    const resolve = (id) => {
       const p = byId.get(id);
-      return p ? `«${p.callsign}»` : null;
+      return p ? { callsign: p.callsign, name: p.name || '' } : null;
     };
-    const lines = [];
-    groups.forEach((g) => {
-      lines.push(g.name);
-      const mem = g.members.map(name).filter(Boolean);
-      if (mem.length) lines.push(`— ${mem.join(', ')}`);
-      g.subgroups.forEach((s) => {
-        const sm = s.members.map(name).filter(Boolean);
-        lines.push(`  ${s.name}: ${sm.length ? sm.join(', ') : '—'}`);
-      });
-      lines.push('');
-    });
-    return lines.join('\n').trim();
+    const outGroups = groups.map((g) => ({
+      name: g.name,
+      members: g.members.map(resolve).filter(Boolean),
+      subgroups: g.subgroups.map((s) => ({
+        name: s.name,
+        members: s.members.map(resolve).filter(Boolean)
+      }))
+    }));
+    return { groups: outGroups };
   };
 
-  // Опубликовать расстановку как мероприятие
-  const publish = async () => {
-    const t = title.trim();
-    if (!t) {
-      setPublishMsg('Сначала укажите название игры');
+  // Прикрепить расстановку к выбранному мероприятию
+  const attachRoster = async () => {
+    if (!eventId) {
+      setPublishMsg('Выберите мероприятие');
       return;
     }
-    if (!window.confirm(`Опубликовать «${t}» в раздел «Мероприятия»?`)) return;
+    const ev = events.find((e) => String(e.id) === String(eventId));
+    if (!window.confirm(`Прикрепить расстановку к «${ev?.title || 'мероприятию'}»? Прежняя будет заменена.`)) return;
     setPublishMsg('');
     setPublishing(true);
     try {
-      await api.createEvent({
-        title: t,
-        date: '',
-        location: '',
-        description: buildRoster(),
-        image: ''
-      });
-      setPublishMsg('Опубликовано в «Мероприятия» ✓ Дату и детали можно дополнить там.');
+      await api.setEventRoster(eventId, buildRoster());
+      setPublishMsg(`Расстановка прикреплена к «${ev?.title || 'мероприятию'}» ✓`);
     } catch (err) {
-      setPublishMsg(err.message || 'Не удалось опубликовать');
+      setPublishMsg(err.message || 'Не удалось прикрепить расстановку');
     } finally {
       setPublishing(false);
     }
@@ -288,20 +280,25 @@ export default function PlannerAdmin() {
       </p>
 
       <div className="plan-toolbar">
-        <input
+        <select
           className="plan-title-input"
-          value={title}
-          onChange={(e) => { setTitle(e.target.value); setPublishMsg(''); }}
-          placeholder="Название игры"
-          maxLength={200}
-        />
+          value={eventId}
+          onChange={(e) => { setEventId(e.target.value); setPublishMsg(''); }}
+        >
+          <option value="">— Выберите мероприятие —</option>
+          {events.map((e) => (
+            <option key={e.id} value={e.id}>
+              {e.title}{e.date ? ` (${e.date})` : ''}
+            </option>
+          ))}
+        </select>
         <button
           type="button"
           className="btn btn-primary"
-          onClick={publish}
-          disabled={publishing || !title.trim()}
+          onClick={attachRoster}
+          disabled={publishing || !eventId}
         >
-          {publishing ? 'Публикация…' : 'Опубликовать в мероприятия'}
+          {publishing ? 'Прикрепление…' : 'Прикрепить расстановку'}
         </button>
       </div>
       {publishMsg && (

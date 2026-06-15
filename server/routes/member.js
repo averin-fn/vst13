@@ -306,7 +306,7 @@ router.post('/push/unsubscribe', requireMember, (req, res) => {
 router.get('/rsvps', requireMember, (req, res) => {
   const rows = db
     .prepare(
-      `SELECT e.id, e.title, e.date, e.location, e.description, e.image,
+      `SELECT e.id, e.title, e.date, e.location, e.description, e.image, e.roster,
               r.status AS my_status
        FROM events e
        LEFT JOIN event_rsvps r ON r.event_id = e.id AND r.participant_id = ?

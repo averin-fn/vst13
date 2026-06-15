@@ -34,6 +34,53 @@ function VoteGroup({ label, status, people }) {
   );
 }
 
+// Разбор JSON-расстановки из мероприятия
+function parseRoster(raw) {
+  if (!raw) return null;
+  try {
+    const d = JSON.parse(raw);
+    return d && Array.isArray(d.groups) && d.groups.length ? d : null;
+  } catch {
+    return null;
+  }
+}
+
+function RosterChips({ members }) {
+  if (!members || members.length === 0) return <span className="roster-empty">—</span>;
+  return (
+    <div className="roster-chips">
+      {members.map((m, i) => (
+        <span key={i} className="roster-chip" title={m.name || ''}>
+          «{m.callsign}»
+        </span>
+      ))}
+    </div>
+  );
+}
+
+// Графическая расстановка по отрядам/группам
+function RosterView({ data }) {
+  return (
+    <div className="roster">
+      <div className="roster-head">🪖 Расстановка по отрядам</div>
+      <div className="roster-groups">
+        {data.groups.map((g, i) => (
+          <div key={i} className="roster-group">
+            <div className="roster-group-name">{g.name}</div>
+            <RosterChips members={g.members} />
+            {(g.subgroups || []).map((s, k) => (
+              <div key={k} className="roster-subgroup">
+                <div className="roster-subgroup-name">{s.name}</div>
+                <RosterChips members={s.members} />
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // Сегодня в формате YYYY-MM-DD (локальное время)
 function todayIso() {
   const d = new Date();
@@ -146,6 +193,7 @@ export default function CabinetEvents() {
               const list = votes[e.id] || [];
               const yes = list.filter((v) => v.status === 'yes');
               const no = list.filter((v) => v.status === 'no');
+              const roster = parseRoster(e.roster);
               return (
                 <article
                   key={e.id}
@@ -157,6 +205,8 @@ export default function CabinetEvents() {
                     <h3 className="event-title">{e.title}</h3>
                     {e.location && <p className="event-location">📍 {e.location}</p>}
                     {e.description && <p className="event-description">{e.description}</p>}
+
+                    {roster && <RosterView data={roster} />}
 
                     {!archive && (
                       <div className="rsvp-actions">

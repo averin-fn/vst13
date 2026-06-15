@@ -128,6 +128,9 @@ try { db.exec("ALTER TABLE chat_messages ADD COLUMN attachment_name TEXT NOT NUL
 // Миграция: ответ на сообщение (id родительского сообщения; 0 — обычное сообщение)
 try { db.exec('ALTER TABLE chat_messages ADD COLUMN reply_to_id INTEGER NOT NULL DEFAULT 0'); } catch { /* колонка уже есть */ }
 
+// Миграция: расстановка команды (снимок из планировщика) для мероприятия, JSON-строка
+try { db.exec("ALTER TABLE events ADD COLUMN roster TEXT NOT NULL DEFAULT ''"); } catch { /* колонка уже есть */ }
+
 // Подписки на пуш-уведомления (Web Push)
 db.exec(`
   CREATE TABLE IF NOT EXISTS push_subscriptions (
