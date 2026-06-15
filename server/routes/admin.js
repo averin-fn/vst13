@@ -292,6 +292,7 @@ router.get('/planner', (req, res) => {
 router.put('/planner', (req, res) => {
   const b = req.body || {};
   const board = {
+    title: typeof b.title === 'string' ? b.title.slice(0, 200) : '',
     groups: Array.isArray(b.groups) ? b.groups : [],
     // вручную добавленные люди (гости/из других команд), которых нет в участниках
     extras: Array.isArray(b.extras) ? b.extras : []

@@ -7,11 +7,14 @@ export default function PlannerAdmin() {
   const [participants, setParticipants] = useState([]);
   const [extras, setExtras] = useState([]); // вручную добавленные люди (нет в участниках)
   const [groups, setGroups] = useState([]);
+  const [title, setTitle] = useState(''); // название игры
   const [status, setStatus] = useState('loading');
   const [saved, setSaved] = useState(true);
   const [selected, setSelected] = useState(null); // id бойца для тап-переноса
   const [newGroup, setNewGroup] = useState('');
   const [newPerson, setNewPerson] = useState(''); // позывной ручного бойца
+  const [publishing, setPublishing] = useState(false);
+  const [publishMsg, setPublishMsg] = useState('');
   const saveTimer = useRef(null);
   const firstLoad = useRef(true);
 
@@ -20,6 +23,7 @@ export default function PlannerAdmin() {
     Promise.all([api.getParticipants(), api.getPlanner()])
       .then(([people, board]) => {
         setParticipants(people);
+        setTitle(board.title || '');
         const extraList = (board.extras || []).filter((x) => x && x.id);
         setExtras(extraList);
         const valid = new Set([...people.map((p) => p.id), ...extraList.map((x) => x.id)]);
@@ -49,10 +53,10 @@ export default function PlannerAdmin() {
     setSaved(false);
     clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
-      api.savePlanner({ groups, extras }).then(() => setSaved(true)).catch(() => {});
+      api.savePlanner({ title, groups, extras }).then(() => setSaved(true)).catch(() => {});
     }, 600);
     return () => clearTimeout(saveTimer.current);
-  }, [groups, extras]);
+  }, [title, groups, extras]);
 
   // Все люди на доске: зарегистрированные участники + добавленные вручную
   const people = useMemo(() => [...participants, ...extras], [participants, extras]);
@@ -193,6 +197,52 @@ export default function PlannerAdmin() {
     if (selected === memberId) setSelected(null);
   };
 
+  // Текст расстановки для описания мероприятия
+  const buildRoster = () => {
+    const name = (id) => {
+      const p = byId.get(id);
+      return p ? `«${p.callsign}»` : null;
+    };
+    const lines = [];
+    groups.forEach((g) => {
+      lines.push(g.name);
+      const mem = g.members.map(name).filter(Boolean);
+      if (mem.length) lines.push(`— ${mem.join(', ')}`);
+      g.subgroups.forEach((s) => {
+        const sm = s.members.map(name).filter(Boolean);
+        lines.push(`  ${s.name}: ${sm.length ? sm.join(', ') : '—'}`);
+      });
+      lines.push('');
+    });
+    return lines.join('\n').trim();
+  };
+
+  // Опубликовать расстановку как мероприятие
+  const publish = async () => {
+    const t = title.trim();
+    if (!t) {
+      setPublishMsg('Сначала укажите название игры');
+      return;
+    }
+    if (!window.confirm(`Опубликовать «${t}» в раздел «Мероприятия»?`)) return;
+    setPublishMsg('');
+    setPublishing(true);
+    try {
+      await api.createEvent({
+        title: t,
+        date: '',
+        location: '',
+        description: buildRoster(),
+        image: ''
+      });
+      setPublishMsg('Опубликовано в «Мероприятия» ✓ Дату и детали можно дополнить там.');
+    } catch (err) {
+      setPublishMsg(err.message || 'Не удалось опубликовать');
+    } finally {
+      setPublishing(false);
+    }
+  };
+
   const Chip = ({ id }) => {
     const p = byId.get(id);
     if (!p) return null;
@@ -236,6 +286,29 @@ export default function PlannerAdmin() {
         Расставьте команду по группам и подгруппам. Перетаскивайте бойцов мышью или
         нажмите на бойца, затем на нужную группу. {saved ? 'Сохранено ✓' : 'Сохранение…'}
       </p>
+
+      <div className="plan-toolbar">
+        <input
+          className="plan-title-input"
+          value={title}
+          onChange={(e) => { setTitle(e.target.value); setPublishMsg(''); }}
+          placeholder="Название игры"
+          maxLength={200}
+        />
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={publish}
+          disabled={publishing || !title.trim()}
+        >
+          {publishing ? 'Публикация…' : 'Опубликовать в мероприятия'}
+        </button>
+      </div>
+      {publishMsg && (
+        <p className={`notice ${publishMsg.includes('✓') ? 'notice-success' : 'notice-error'}`}>
+          {publishMsg}
+        </p>
+      )}
 
       <div className="planner">
         {/* Пул нераспределённых */}
