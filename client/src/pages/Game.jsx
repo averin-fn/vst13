@@ -16,6 +16,7 @@ export default function Game() {
   const [reason, setReason] = useState('');
   const [error, setError] = useState('');
   const [busyTeam, setBusyTeam] = useState(0);
+  const [qrOpen, setQrOpen] = useState(false);
 
   const load = () =>
     api
@@ -58,7 +59,29 @@ export default function Game() {
 
   return (
     <div className="page">
-      <h1 className="page-title">Breakout of Zelenyi</h1>
+      <div className="game-title-row">
+        <h1 className="page-title">Breakout of Zelenyi</h1>
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          onClick={() => setQrOpen(true)}
+          title="Показать QR-код страницы"
+        >
+          QR-код
+        </button>
+      </div>
+
+      {qrOpen && (
+        <div className="game-qr-overlay" onClick={() => setQrOpen(false)}>
+          <div className="game-qr-card">
+            <img src="/qr/breakout-scoreboard.svg" alt="QR-код страницы с очками" />
+            <div className="game-qr-caption">
+              Наведи камеру — счёт игры
+              <span>вст13.рф/game</span>
+            </div>
+          </div>
+        </div>
+      )}
 
       {status === 'loading' && <p className="notice">Загрузка…</p>}
       {status === 'error' && (

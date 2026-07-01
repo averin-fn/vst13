@@ -3241,6 +3241,55 @@ a {
 }
 
 /* ---------- Игра Breakout of Zelenyi ---------- */
+.game-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.game-title-row .page-title {
+  margin-bottom: 0;
+}
+/* Полноэкранный показ QR-кода (для проектора/печати с экрана) */
+.game-qr-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(0, 0, 0, 0.85);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.game-qr-card {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.game-qr-card img {
+  width: min(70vmin, 480px);
+  height: min(70vmin, 480px);
+  display: block;
+}
+.game-qr-caption {
+  color: #15170f;
+  font-weight: 700;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.game-qr-caption span {
+  font-weight: 400;
+  color: #6b6f57;
+  font-size: 0.9rem;
+}
+
 .game-board {
   display: flex;
   flex-direction: column;
