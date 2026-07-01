@@ -6,6 +6,7 @@ import ParticipantDetail from './pages/ParticipantDetail.jsx';
 import Feedback from './pages/Feedback.jsx';
 import Workshop from './pages/Workshop.jsx';
 import Calendar from './pages/Calendar.jsx';
+import Game from './pages/Game.jsx';
 import Rules from './pages/Rules.jsx';
 import Login from './pages/admin/Login.jsx';
 import AdminLayout from './pages/admin/AdminLayout.jsx';
@@ -16,6 +17,7 @@ import SettingsAdmin from './pages/admin/SettingsAdmin.jsx';
 import RulesAdmin from './pages/admin/RulesAdmin.jsx';
 import WorkshopAdmin from './pages/admin/WorkshopAdmin.jsx';
 import PlannerAdmin from './pages/admin/PlannerAdmin.jsx';
+import GameAdmin from './pages/admin/GameAdmin.jsx';
 import CabinetLogin from './pages/cabinet/Login.jsx';
 import Cabinet from './pages/cabinet/Cabinet.jsx';
 import CabinetProfile from './pages/cabinet/Profile.jsx';
@@ -34,6 +36,7 @@ export default function App() {
         <Route path="/participants/:id" element={<ParticipantDetail />} />
         <Route path="/events" element={<Navigate to="/calendar" replace />} />
         <Route path="/calendar" element={<Calendar />} />
+        <Route path="/game" element={<Game />} />
         <Route path="/workshop" element={<Workshop />} />
         <Route path="/rules" element={<Navigate to="/cabinet/rules" replace />} />
         <Route path="/feedback" element={<Feedback />} />
@@ -62,6 +65,7 @@ export default function App() {
         <Route path="rules" element={<RulesAdmin />} />
         <Route path="workshop" element={<WorkshopAdmin />} />
         <Route path="planner" element={<PlannerAdmin />} />
+        <Route path="game" element={<GameAdmin />} />
       </Route>
     </Routes>
   );

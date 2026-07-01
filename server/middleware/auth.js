@@ -67,11 +67,26 @@ function ensureActsManager(req, res, next) {
   next();
 }
 
+// Проверка флага can_manage_game (судья Breakout of Zelenyi).
+function ensureGameManager(req, res, next) {
+  if (!req.member) return res.status(401).json({ error: 'Требуется вход' });
+  // eslint-disable-next-line global-require
+  const db = require('../db');
+  const row = db
+    .prepare('SELECT can_manage_game FROM participants WHERE id = ?')
+    .get(req.member.participantId);
+  if (!row || !row.can_manage_game) {
+    return res.status(403).json({ error: 'Нет прав на начисление очков' });
+  }
+  next();
+}
+
 module.exports = {
   signAdmin,
   signMember,
   requireAuth,
   requireMember,
   ensureEventManager,
-  ensureActsManager
+  ensureActsManager,
+  ensureGameManager
 };

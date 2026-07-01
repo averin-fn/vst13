@@ -10,6 +10,12 @@ export default function Navbar() {
 
       <nav className="sidebar-nav">
         <NavLink
+          to="/game"
+          className={({ isActive }) => (isActive ? 'nav-link active' : 'nav-link')}
+        >
+          Breakout of Zelenyi
+        </NavLink>
+        <NavLink
           to="/cabinet"
           className={({ isActive }) =>
             `nav-link nav-link-cabinet ${isActive ? 'active' : ''}`

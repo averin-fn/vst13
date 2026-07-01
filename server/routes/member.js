@@ -13,7 +13,7 @@ const upload = require('../middleware/upload');
 const router = express.Router();
 
 const ME_COLS =
-  'id, name, callsign, role, bio, photo, model_url, joined_date, username, can_manage_events, is_admin, can_manage_acts';
+  'id, name, callsign, role, bio, photo, model_url, joined_date, username, can_manage_events, is_admin, can_manage_acts, can_manage_game, is_judge';
 
 /* ---------- Авторизация ---------- */
 router.post('/login', (req, res) => {
@@ -37,6 +37,19 @@ router.get('/me', requireMember, (req, res) => {
   const p = db.prepare(`SELECT ${ME_COLS} FROM participants WHERE id = ?`).get(req.member.participantId);
   if (!p) return res.status(404).json({ error: 'Профиль не найден' });
   res.json(p);
+});
+
+// Аккаунт судьи Breakout of Zelenyi ограничен: доступны только вход, /me
+// (объявлен выше) и начисление очков в /api/game. Все маршруты кабинета ниже
+// по файлу для судьи закрыты.
+router.use(requireMember, (req, res, next) => {
+  const row = db
+    .prepare('SELECT is_judge FROM participants WHERE id = ?')
+    .get(req.member.participantId);
+  if (row && row.is_judge) {
+    return res.status(403).json({ error: 'Аккаунт судьи ограничен начислением очков' });
+  }
+  next();
 });
 
 const EDITABLE = ['bio', 'photo', 'model_url'];

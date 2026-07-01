@@ -31,6 +31,10 @@ export default function Home() {
           <h3>Мастерская</h3>
           <p>Ремонт и тюнинг приводов, заявки и примеры работ.</p>
         </Link>
+        <Link to="/game" className="feature">
+          <h3>Breakout of Zelenyi</h3>
+          <p>Турнирная таблица игры: команды и очки в реальном времени.</p>
+        </Link>
       </section>
 
       <section className="cta-block">

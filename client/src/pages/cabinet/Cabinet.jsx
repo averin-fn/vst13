@@ -35,6 +35,11 @@ export default function Cabinet() {
     return <Navigate to="/cabinet/login" replace />;
   }
 
+  // Аккаунт судьи Breakout of Zelenyi: кабинет закрыт, его место — вкладка игры
+  if (me?.is_judge) {
+    return <Navigate to="/game" replace />;
+  }
+
   const logout = () => {
     clearMemberToken();
     navigate('/cabinet/login', { replace: true });

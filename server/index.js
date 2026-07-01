@@ -19,6 +19,7 @@ app.use('/api/workshop', require('./routes/workshop'));
 app.use('/api/settings', require('./routes/settings'));
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/member', require('./routes/member'));
+app.use('/api/game', require('./routes/game'));
 app.use('/api/admin', require('./routes/admin'));
 
 app.get('/api/health', (req, res) => res.json({ status: 'ok' }));

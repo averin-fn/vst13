@@ -262,5 +262,32 @@ export const api = {
     }),
 
   // админ: RSVP по мероприятию
-  getEventRsvps: (id) => request(`/admin/events/${id}/rsvps`, { auth: true })
+  getEventRsvps: (id) => request(`/admin/events/${id}/rsvps`, { auth: true }),
+
+  // ---- игра Breakout of Zelenyi ----
+  getGame: () => request('/game'),
+  // судья (участник с правом can_manage_game)
+  addGamePoints: (teamId, delta, reason) =>
+    request(`/game/teams/${teamId}/points`, {
+      method: 'POST',
+      memberAuth: true,
+      body: JSON.stringify({ delta, reason })
+    }),
+  // админ
+  createGameTeam: (data) =>
+    request('/admin/game/teams', { method: 'POST', auth: true, body: JSON.stringify(data) }),
+  updateGameTeam: (id, data) =>
+    request(`/admin/game/teams/${id}`, { method: 'PUT', auth: true, body: JSON.stringify(data) }),
+  deleteGameTeam: (id) => request(`/admin/game/teams/${id}`, { method: 'DELETE', auth: true }),
+  adminAddGamePoints: (teamId, delta, reason) =>
+    request(`/admin/game/teams/${teamId}/points`, {
+      method: 'POST',
+      auth: true,
+      body: JSON.stringify({ delta, reason })
+    }),
+  deleteGameLogEntry: (id) => request(`/admin/game/log/${id}`, { method: 'DELETE', auth: true }),
+  getGameJudges: () => request('/admin/game/judges', { auth: true }),
+  createGameJudge: (data) =>
+    request('/admin/game/judges', { method: 'POST', auth: true, body: JSON.stringify(data) }),
+  deleteGameJudge: (id) => request(`/admin/game/judges/${id}`, { method: 'DELETE', auth: true })
 };

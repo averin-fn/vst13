@@ -13,7 +13,7 @@ router.use(requireAuth);
 /* ---------------- Участники ---------------- */
 const PARTICIPANT_FIELDS = ['name', 'callsign', 'role', 'bio', 'photo', 'model_url', 'joined_date'];
 const PARTICIPANT_ADMIN_COLS =
-  'id, name, callsign, role, bio, photo, model_url, joined_date, username, can_manage_events, is_admin, squad, can_manage_acts';
+  'id, name, callsign, role, bio, photo, model_url, joined_date, username, can_manage_events, is_admin, squad, can_manage_acts, can_manage_game';
 
 // Номер отряда: целое 0..3 (0 — не назначен). Имеет смысл только для солдат.
 function normalizeSquad(value) {
@@ -79,13 +79,14 @@ router.post('/participants', (req, res) => {
   const canManage = req.body.can_manage_events ? 1 : 0;
   const isAdmin = req.body.is_admin ? 1 : 0;
   const canManageActs = req.body.can_manage_acts ? 1 : 0;
+  const canManageGame = req.body.can_manage_game ? 1 : 0;
   // Отряд имеет смысл только для солдат
   const squad = data.role === 'Солдат' ? normalizeSquad(req.body.squad) : 0;
   try {
     const info = db
       .prepare(
-        `INSERT INTO participants (name, callsign, role, bio, photo, model_url, joined_date, username, password_hash, can_manage_events, is_admin, squad, can_manage_acts)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO participants (name, callsign, role, bio, photo, model_url, joined_date, username, password_hash, can_manage_events, is_admin, squad, can_manage_acts, can_manage_game)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       )
       .run(
         data.name,
@@ -100,7 +101,8 @@ router.post('/participants', (req, res) => {
         canManage,
         isAdmin,
         squad,
-        canManageActs
+        canManageActs,
+        canManageGame
       );
     res.status(201).json({ id: Number(info.lastInsertRowid) });
   } catch (err) {
@@ -176,6 +178,13 @@ router.put('/participants/:id', (req, res) => {
   if ('can_manage_acts' in req.body) {
     db.prepare('UPDATE participants SET can_manage_acts = ? WHERE id = ?').run(
       req.body.can_manage_acts ? 1 : 0,
+      req.params.id
+    );
+  }
+  // Право начислять очки в игре Breakout of Zelenyi
+  if ('can_manage_game' in req.body) {
+    db.prepare('UPDATE participants SET can_manage_game = ? WHERE id = ?').run(
+      req.body.can_manage_game ? 1 : 0,
       req.params.id
     );
   }
@@ -309,6 +318,98 @@ router.put('/planner', (req, res) => {
   db.prepare(
     "INSERT INTO settings (key, value) VALUES ('planner_board', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
   ).run(JSON.stringify(board));
+  res.json({ ok: true });
+});
+
+/* ---------------- Игра Breakout of Zelenyi ---------------- */
+router.post('/game/teams', (req, res) => {
+  const name = String(req.body.name || '').trim();
+  if (!name) return res.status(400).json({ error: 'Укажите название команды' });
+  const color = String(req.body.color || '').trim();
+  const info = db
+    .prepare('INSERT INTO game_teams (name, color, created_at) VALUES (?, ?, ?)')
+    .run(name, color, new Date().toISOString());
+  res.status(201).json({ id: Number(info.lastInsertRowid) });
+});
+
+router.put('/game/teams/:id', (req, res) => {
+  const name = String(req.body.name || '').trim();
+  if (!name) return res.status(400).json({ error: 'Укажите название команды' });
+  const color = String(req.body.color || '').trim();
+  const info = db
+    .prepare('UPDATE game_teams SET name = ?, color = ? WHERE id = ?')
+    .run(name, color, req.params.id);
+  if (info.changes === 0) return res.status(404).json({ error: 'Команда не найдена' });
+  res.json({ ok: true });
+});
+
+router.delete('/game/teams/:id', (req, res) => {
+  const info = db.prepare('DELETE FROM game_teams WHERE id = ?').run(req.params.id);
+  if (info.changes === 0) return res.status(404).json({ error: 'Команда не найдена' });
+  res.json({ ok: true });
+});
+
+// Начисление очков администратором (в журнал пишется логин админа)
+router.post('/game/teams/:id/points', (req, res) => {
+  const team = db.prepare('SELECT id FROM game_teams WHERE id = ?').get(req.params.id);
+  if (!team) return res.status(404).json({ error: 'Команда не найдена' });
+  const delta = parseInt(req.body.delta, 10);
+  if (!Number.isInteger(delta) || delta === 0 || Math.abs(delta) > 1000000) {
+    return res.status(400).json({ error: 'Укажите ненулевое число очков' });
+  }
+  const reason = String(req.body.reason || '').trim().slice(0, 200);
+  db.prepare(
+    'INSERT INTO game_score_log (team_id, delta, reason, author, created_at) VALUES (?, ?, ?, ?, ?)'
+  ).run(team.id, delta, reason, req.admin.username || 'admin', new Date().toISOString());
+  res.status(201).json({ ok: true });
+});
+
+// Удаление ошибочной записи журнала (очки пересчитаются автоматически)
+router.delete('/game/log/:id', (req, res) => {
+  const info = db.prepare('DELETE FROM game_score_log WHERE id = ?').run(req.params.id);
+  if (info.changes === 0) return res.status(404).json({ error: 'Запись не найдена' });
+  res.json({ ok: true });
+});
+
+// Судьи игры — отдельные аккаунты (is_judge): без кабинета и без места в составе,
+// только вход и начисление очков на вкладке игры.
+router.get('/game/judges', (req, res) => {
+  const rows = db
+    .prepare('SELECT id, name, username FROM participants WHERE is_judge = 1 ORDER BY name')
+    .all();
+  res.json(rows);
+});
+
+router.post('/game/judges', (req, res) => {
+  const name = String(req.body.name || '').trim();
+  const username = String(req.body.username || '').trim();
+  const password = String(req.body.password || '');
+  if (!name) return res.status(400).json({ error: 'Укажите имя или позывной судьи' });
+  if (!username) return res.status(400).json({ error: 'Укажите логин' });
+  if (password.length < 4) {
+    return res.status(400).json({ error: 'Пароль слишком короткий (минимум 4 символа)' });
+  }
+  try {
+    const info = db
+      .prepare(
+        `INSERT INTO participants (name, callsign, role, username, password_hash, is_judge, can_manage_game)
+         VALUES (?, ?, 'Судья', ?, ?, 1, 1)`
+      )
+      .run(name, name, username, bcrypt.hashSync(password, 10));
+    res.status(201).json({ id: Number(info.lastInsertRowid) });
+  } catch (err) {
+    if (/UNIQUE/i.test(err.message)) {
+      return res.status(409).json({ error: 'Такой логин уже занят' });
+    }
+    throw err;
+  }
+});
+
+router.delete('/game/judges/:id', (req, res) => {
+  const info = db
+    .prepare('DELETE FROM participants WHERE id = ? AND is_judge = 1')
+    .run(req.params.id);
+  if (info.changes === 0) return res.status(404).json({ error: 'Судья не найден' });
   res.json({ ok: true });
 });
 

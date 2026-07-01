@@ -131,6 +131,35 @@ try { db.exec('ALTER TABLE chat_messages ADD COLUMN reply_to_id INTEGER NOT NULL
 // Миграция: расстановка команды (снимок из планировщика) для мероприятия, JSON-строка
 try { db.exec("ALTER TABLE events ADD COLUMN roster TEXT NOT NULL DEFAULT ''"); } catch { /* колонка уже есть */ }
 
+// Миграция: право начислять очки в игре Breakout of Zelenyi (0/1)
+try { db.exec('ALTER TABLE participants ADD COLUMN can_manage_game INTEGER NOT NULL DEFAULT 0'); } catch { /* колонка уже есть */ }
+
+// Миграция: аккаунт судьи Breakout of Zelenyi (0/1).
+// Судья не участник команды: не показывается в составе и не имеет доступа
+// к кабинету — только вход и начисление очков.
+try { db.exec('ALTER TABLE participants ADD COLUMN is_judge INTEGER NOT NULL DEFAULT 0'); } catch { /* колонка уже есть */ }
+
+// Игра Breakout of Zelenyi: команды и журнал начисления очков.
+// Очки команды считаются как сумма delta по журналу — история прозрачна и не теряется.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS game_teams (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    color TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL
+  );
+
+  CREATE TABLE IF NOT EXISTS game_score_log (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    team_id INTEGER NOT NULL,
+    delta INTEGER NOT NULL,
+    reason TEXT NOT NULL DEFAULT '',
+    author TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL,
+    FOREIGN KEY (team_id) REFERENCES game_teams(id) ON DELETE CASCADE
+  );
+`);
+
 // Подписки на пуш-уведомления (Web Push)
 db.exec(`
   CREATE TABLE IF NOT EXISTS push_subscriptions (

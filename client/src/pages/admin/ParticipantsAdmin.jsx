@@ -16,6 +16,7 @@ const EMPTY = {
   can_manage_events: false,
   is_admin: false,
   can_manage_acts: false,
+  can_manage_game: false,
   squad: 0
 };
 
@@ -61,6 +62,7 @@ export default function ParticipantsAdmin() {
         can_manage_events: !!full.can_manage_events,
         is_admin: !!full.is_admin,
         can_manage_acts: !!full.can_manage_acts,
+        can_manage_game: !!full.can_manage_game,
         squad: full.squad || 0
       });
       setHadAccount(!!full.username);
@@ -212,6 +214,14 @@ export default function ParticipantsAdmin() {
             onChange={(e) => setForm({ ...form, can_manage_acts: e.target.checked })}
           />
           <span>Доступ к разделу «Акты» (мастер)</span>
+        </label>
+        <label className="check-row">
+          <input
+            type="checkbox"
+            checked={form.can_manage_game}
+            onChange={(e) => setForm({ ...form, can_manage_game: e.target.checked })}
+          />
+          <span>Судья Breakout of Zelenyi (может начислять очки командам)</span>
         </label>
 
         <h3 className="admin-form-title">Аккаунт личного кабинета</h3>
