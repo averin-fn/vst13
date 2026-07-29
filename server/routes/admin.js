@@ -371,6 +371,34 @@ router.delete('/game/log/:id', (req, res) => {
   res.json({ ok: true });
 });
 
+// Квесты и награды — те же операции, что и у судей на вкладке игры
+router.post('/game/quests', (req, res) => {
+  const title = String(req.body.title || '').trim().slice(0, 300);
+  const reward = String(req.body.reward || '').trim().slice(0, 200);
+  if (!title) return res.status(400).json({ error: 'Укажите текст квеста' });
+  const info = db
+    .prepare('INSERT INTO game_quests (title, reward, created_at) VALUES (?, ?, ?)')
+    .run(title, reward, new Date().toISOString());
+  res.status(201).json({ id: Number(info.lastInsertRowid) });
+});
+
+router.put('/game/quests/:id', (req, res) => {
+  const title = String(req.body.title || '').trim().slice(0, 300);
+  const reward = String(req.body.reward || '').trim().slice(0, 200);
+  if (!title) return res.status(400).json({ error: 'Укажите текст квеста' });
+  const info = db
+    .prepare('UPDATE game_quests SET title = ?, reward = ? WHERE id = ?')
+    .run(title, reward, req.params.id);
+  if (info.changes === 0) return res.status(404).json({ error: 'Квест не найден' });
+  res.json({ ok: true });
+});
+
+router.delete('/game/quests/:id', (req, res) => {
+  const info = db.prepare('DELETE FROM game_quests WHERE id = ?').run(req.params.id);
+  if (info.changes === 0) return res.status(404).json({ error: 'Квест не найден' });
+  res.json({ ok: true });
+});
+
 // Судьи игры — отдельные аккаунты (is_judge): без кабинета и без места в составе,
 // только вход и начисление очков на вкладке игры.
 router.get('/game/judges', (req, res) => {

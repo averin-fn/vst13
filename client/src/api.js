@@ -286,6 +286,19 @@ export const api = {
       body: JSON.stringify({ delta, reason })
     }),
   deleteGameLogEntry: (id) => request(`/admin/game/log/${id}`, { method: 'DELETE', auth: true }),
+  // квесты и награды: судья правит со страницы игры, админ — из панели
+  createGameQuest: (data) =>
+    request('/game/quests', { method: 'POST', memberAuth: true, body: JSON.stringify(data) }),
+  updateGameQuest: (id, data) =>
+    request(`/game/quests/${id}`, { method: 'PUT', memberAuth: true, body: JSON.stringify(data) }),
+  deleteGameQuest: (id) => request(`/game/quests/${id}`, { method: 'DELETE', memberAuth: true }),
+  adminCreateGameQuest: (data) =>
+    request('/admin/game/quests', { method: 'POST', auth: true, body: JSON.stringify(data) }),
+  adminUpdateGameQuest: (id, data) =>
+    request(`/admin/game/quests/${id}`, { method: 'PUT', auth: true, body: JSON.stringify(data) }),
+  adminDeleteGameQuest: (id) =>
+    request(`/admin/game/quests/${id}`, { method: 'DELETE', auth: true }),
+
   getGameJudges: () => request('/admin/game/judges', { auth: true }),
   createGameJudge: (data) =>
     request('/admin/game/judges', { method: 'POST', auth: true, body: JSON.stringify(data) }),

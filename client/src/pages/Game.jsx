@@ -8,6 +8,69 @@ const REFRESH_MS = 10000;
 // Очки, при которых полоска команды заполнена целиком
 const MAX_POINTS = 15000;
 
+// Табличка квеста: гость читает, судья правит текст и награду прямо в ней.
+function QuestCard({ quest, canEdit, onSave, onDelete }) {
+  const [title, setTitle] = useState(quest.title);
+  const [reward, setReward] = useState(quest.reward);
+  const [busy, setBusy] = useState(false);
+
+  // Подхватываем правки, пришедшие с автообновлением (свой ввод не затираем:
+  // эффект срабатывает только при смене значения на сервере)
+  useEffect(() => setTitle(quest.title), [quest.title]);
+  useEffect(() => setReward(quest.reward), [quest.reward]);
+
+  const dirty = title !== quest.title || reward !== quest.reward;
+
+  const save = async () => {
+    setBusy(true);
+    try {
+      await onSave({ title, reward });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!canEdit) {
+    return (
+      <div className="card game-quest">
+        <div className="game-quest-title">{quest.title}</div>
+        {quest.reward && <div className="game-quest-reward">{quest.reward}</div>}
+      </div>
+    );
+  }
+
+  return (
+    <div className="card game-quest game-quest--edit">
+      <textarea
+        className="game-quest-input"
+        rows={3}
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        placeholder="Текст квеста"
+      />
+      <input
+        className="game-quest-input game-quest-input--reward"
+        value={reward}
+        onChange={(e) => setReward(e.target.value)}
+        placeholder="Награда (напр. 1500 очков)"
+      />
+      <div className="game-quest-actions">
+        <button
+          type="button"
+          className="btn btn-primary btn-sm"
+          disabled={!dirty || busy || !title.trim()}
+          onClick={save}
+        >
+          {busy ? '…' : dirty ? 'Сохранить' : 'Сохранено'}
+        </button>
+        <button type="button" className="btn btn-danger btn-sm" onClick={onDelete}>
+          Удалить
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export default function Game() {
   const [data, setData] = useState(null);
   const [status, setStatus] = useState('loading');
@@ -17,6 +80,8 @@ export default function Game() {
   const [error, setError] = useState('');
   const [busyTeam, setBusyTeam] = useState(0);
   const [qrOpen, setQrOpen] = useState(false);
+  const [newQuest, setNewQuest] = useState({ title: '', reward: '' });
+  const [questError, setQuestError] = useState('');
 
   const load = () =>
     api
@@ -37,6 +102,40 @@ export default function Game() {
   const canJudge = !!me?.can_manage_game;
   const teams = data?.teams || [];
   const log = data?.log || [];
+  const quests = data?.quests || [];
+
+  const addQuest = async (e) => {
+    e.preventDefault();
+    setQuestError('');
+    try {
+      await api.createGameQuest(newQuest);
+      setNewQuest({ title: '', reward: '' });
+      await load();
+    } catch (err) {
+      setQuestError(err.message);
+    }
+  };
+
+  const saveQuest = async (id, values) => {
+    setQuestError('');
+    try {
+      await api.updateGameQuest(id, values);
+      await load();
+    } catch (err) {
+      setQuestError(err.message);
+    }
+  };
+
+  const removeQuest = async (q) => {
+    if (!window.confirm(`Удалить квест «${q.title}»?`)) return;
+    setQuestError('');
+    try {
+      await api.deleteGameQuest(q.id);
+      await load();
+    } catch (err) {
+      setQuestError(err.message);
+    }
+  };
 
   const apply = async (teamId, sign) => {
     const delta = sign * Math.abs(parseInt(amount, 10) || 0);
@@ -173,6 +272,51 @@ export default function Game() {
             </div>
           ))}
         </div>
+      )}
+
+      {(quests.length > 0 || canJudge) && (
+        <>
+          <h2 className="game-log-title">Квесты и награды</h2>
+          {questError && <p className="notice notice-error">{questError}</p>}
+          <div className="game-quests">
+            {quests.map((q) => (
+              <QuestCard
+                key={q.id}
+                quest={q}
+                canEdit={canJudge}
+                onSave={(values) => saveQuest(q.id, values)}
+                onDelete={() => removeQuest(q)}
+              />
+            ))}
+
+            {canJudge && (
+              <form className="card game-quest game-quest--new" onSubmit={addQuest}>
+                <textarea
+                  className="game-quest-input"
+                  rows={3}
+                  value={newQuest.title}
+                  onChange={(e) => setNewQuest({ ...newQuest, title: e.target.value })}
+                  placeholder="Новый квест: что нужно сделать"
+                  required
+                />
+                <input
+                  className="game-quest-input game-quest-input--reward"
+                  value={newQuest.reward}
+                  onChange={(e) => setNewQuest({ ...newQuest, reward: e.target.value })}
+                  placeholder="Награда (напр. 1500 очков)"
+                />
+                <div className="game-quest-actions">
+                  <button type="submit" className="btn btn-primary btn-sm">
+                    Добавить квест
+                  </button>
+                </div>
+              </form>
+            )}
+          </div>
+          {quests.length === 0 && !canJudge && (
+            <p className="notice">Квесты пока не объявлены.</p>
+          )}
+        </>
       )}
 
       {canJudge && log.length > 0 && (

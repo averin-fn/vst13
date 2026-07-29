@@ -21,11 +21,14 @@ const LOG_ROWS = `
   ORDER BY l.id DESC
   LIMIT ?`;
 
-// Публично: команды с очками и последние начисления
+const QUEST_ROWS = 'SELECT id, title, reward FROM game_quests ORDER BY id';
+
+// Публично: команды с очками, последние начисления и список квестов
 router.get('/', (req, res) => {
   const teams = db.prepare(TEAMS_WITH_POINTS).all();
   const log = db.prepare(LOG_ROWS).all(50);
-  res.json({ teams, log });
+  const quests = db.prepare(QUEST_ROWS).all();
+  res.json({ teams, log, quests });
 });
 
 // Судья: начислить или снять очки
@@ -47,6 +50,40 @@ router.post('/teams/:id/points', requireMember, ensureGameManager, (req, res) =>
   ).run(team.id, delta, reason, p ? p.callsign : '', new Date().toISOString());
 
   res.status(201).json({ ok: true });
+});
+
+/* ---------- Квесты и награды (заполняют судьи) ---------- */
+// Текст квеста и награды — свободные строки, ограничиваем только длину.
+function questFields(body) {
+  return {
+    title: String(body.title || '').trim().slice(0, 300),
+    reward: String(body.reward || '').trim().slice(0, 200)
+  };
+}
+
+router.post('/quests', requireMember, ensureGameManager, (req, res) => {
+  const { title, reward } = questFields(req.body);
+  if (!title) return res.status(400).json({ error: 'Укажите текст квеста' });
+  const info = db
+    .prepare('INSERT INTO game_quests (title, reward, created_at) VALUES (?, ?, ?)')
+    .run(title, reward, new Date().toISOString());
+  res.status(201).json({ id: Number(info.lastInsertRowid) });
+});
+
+router.put('/quests/:id', requireMember, ensureGameManager, (req, res) => {
+  const { title, reward } = questFields(req.body);
+  if (!title) return res.status(400).json({ error: 'Укажите текст квеста' });
+  const info = db
+    .prepare('UPDATE game_quests SET title = ?, reward = ? WHERE id = ?')
+    .run(title, reward, req.params.id);
+  if (info.changes === 0) return res.status(404).json({ error: 'Квест не найден' });
+  res.json({ ok: true });
+});
+
+router.delete('/quests/:id', requireMember, ensureGameManager, (req, res) => {
+  const info = db.prepare('DELETE FROM game_quests WHERE id = ?').run(req.params.id);
+  if (info.changes === 0) return res.status(404).json({ error: 'Квест не найден' });
+  res.json({ ok: true });
 });
 
 module.exports = router;

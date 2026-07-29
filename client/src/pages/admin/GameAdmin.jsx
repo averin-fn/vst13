@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
 import { api } from '../../api';
 
-// Админка игры Breakout of Zelenyi: команды, очки, журнал начислений.
+// Админка игры Breakout of Zelenyi: команды, очки, квесты, судьи, журнал.
 const EMPTY = { name: '', color: '#8e9b62' };
 
 const EMPTY_JUDGE = { name: '', username: '', password: '' };
+const EMPTY_QUEST = { title: '', reward: '' };
 
 export default function GameAdmin() {
-  const [data, setData] = useState({ teams: [], log: [] });
+  const [data, setData] = useState({ teams: [], log: [], quests: [] });
   const [form, setForm] = useState(EMPTY);
   const [editingId, setEditingId] = useState(null);
   const [points, setPoints] = useState({}); // teamId -> строка с числом
@@ -18,6 +19,9 @@ export default function GameAdmin() {
   const [judgeForm, setJudgeForm] = useState(EMPTY_JUDGE);
   const [judgeError, setJudgeError] = useState('');
   const [judgeBusy, setJudgeBusy] = useState(false);
+  const [questForm, setQuestForm] = useState(EMPTY_QUEST);
+  const [questEditingId, setQuestEditingId] = useState(null);
+  const [questError, setQuestError] = useState('');
 
   const load = () => api.getGame().then(setData).catch(() => {});
   const loadJudges = () => api.getGameJudges().then(setJudges).catch(() => {});
@@ -49,6 +53,34 @@ export default function GameAdmin() {
       await loadJudges();
     } catch (err) {
       setJudgeError(err.message);
+    }
+  };
+
+  const saveQuest = async (e) => {
+    e.preventDefault();
+    setQuestError('');
+    try {
+      if (questEditingId) await api.adminUpdateGameQuest(questEditingId, questForm);
+      else await api.adminCreateGameQuest(questForm);
+      setQuestForm(EMPTY_QUEST);
+      setQuestEditingId(null);
+      await load();
+    } catch (err) {
+      setQuestError(err.message);
+    }
+  };
+
+  const removeQuest = async (q) => {
+    if (!window.confirm(`Удалить квест «${q.title}»?`)) return;
+    try {
+      await api.adminDeleteGameQuest(q.id);
+      if (questEditingId === q.id) {
+        setQuestForm(EMPTY_QUEST);
+        setQuestEditingId(null);
+      }
+      await load();
+    } catch (err) {
+      setQuestError(err.message);
     }
   };
 
@@ -204,6 +236,71 @@ export default function GameAdmin() {
           </div>
         ))}
         {data.teams.length === 0 && <p className="notice">Команд пока нет.</p>}
+      </div>
+
+      <h2 className="game-log-title">Квесты и награды</h2>
+      <form className="card admin-form" onSubmit={saveQuest}>
+        <label className="field">
+          <span>Текст квеста *</span>
+          <textarea
+            rows={2}
+            value={questForm.title}
+            onChange={(e) => setQuestForm({ ...questForm, title: e.target.value })}
+            required
+          />
+        </label>
+        <label className="field">
+          <span>Награда</span>
+          <input
+            value={questForm.reward}
+            onChange={(e) => setQuestForm({ ...questForm, reward: e.target.value })}
+            placeholder="напр. 1500 очков"
+          />
+        </label>
+        {questError && <p className="notice notice-error">{questError}</p>}
+        <div className="form-actions">
+          <button type="submit" className="btn btn-primary">
+            {questEditingId ? 'Сохранить' : 'Добавить квест'}
+          </button>
+          {questEditingId && (
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={() => {
+                setQuestForm(EMPTY_QUEST);
+                setQuestEditingId(null);
+              }}
+            >
+              Отмена
+            </button>
+          )}
+        </div>
+      </form>
+      <div className="admin-list">
+        {(data.quests || []).map((q) => (
+          <div key={q.id} className={`admin-row ${questEditingId === q.id ? 'editing' : ''}`}>
+            <div className="admin-row-main">
+              <strong>{q.title}</strong>
+              <span className="admin-row-sub">{q.reward || 'награда не указана'}</span>
+            </div>
+            <div className="admin-row-actions">
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  setQuestForm({ title: q.title, reward: q.reward });
+                  setQuestEditingId(q.id);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              >
+                Изменить
+              </button>
+              <button className="btn btn-danger btn-sm" onClick={() => removeQuest(q)}>
+                Удалить
+              </button>
+            </div>
+          </div>
+        ))}
+        {(data.quests || []).length === 0 && <p className="notice">Квестов пока нет.</p>}
       </div>
 
       <h2 className="game-log-title">Судьи</h2>

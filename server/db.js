@@ -158,6 +158,13 @@ db.exec(`
     created_at TEXT NOT NULL,
     FOREIGN KEY (team_id) REFERENCES game_teams(id) ON DELETE CASCADE
   );
+
+  CREATE TABLE IF NOT EXISTS game_quests (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL DEFAULT '',
+    reward TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL
+  );
 `);
 
 // Подписки на пуш-уведомления (Web Push)
