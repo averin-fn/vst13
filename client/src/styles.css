@@ -3356,6 +3356,26 @@ a {
   gap: 8px;
   flex-shrink: 0;
 }
+/* На телефоне место + название + очки идут первой строкой, кнопки судьи —
+   второй: иначе название команды сжимается до нечитаемого огрызка. */
+@media (max-width: 560px) {
+  .game-team {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .game-team-name {
+    overflow: visible;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  .game-team-actions {
+    flex: 1 0 100%;
+    justify-content: stretch;
+  }
+  .game-team-actions .btn {
+    flex: 1;
+  }
+}
 .game-judge-panel {
   margin-bottom: 18px;
 }
