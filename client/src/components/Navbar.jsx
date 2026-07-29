@@ -1,6 +1,19 @@
+import { useEffect, useState } from 'react';
 import { NavLink, Link } from 'react-router-dom';
+import { api, isMemberAuthed } from '../api';
 
 export default function Navbar() {
+  // Судейский аккаунт кабинета не имеет — ссылку в него не показываем
+  const [isJudge, setIsJudge] = useState(false);
+
+  useEffect(() => {
+    if (!isMemberAuthed()) return;
+    api
+      .getMe()
+      .then((me) => setIsJudge(!!me.is_judge))
+      .catch(() => {});
+  }, []);
+
   return (
     <aside className="sidebar">
       <Link to="/" className="sidebar-brand" title="На главную">
@@ -15,14 +28,16 @@ export default function Navbar() {
         >
           Breakout of Zelenyi
         </NavLink>
-        <NavLink
-          to="/cabinet"
-          className={({ isActive }) =>
-            `nav-link nav-link-cabinet ${isActive ? 'active' : ''}`
-          }
-        >
-          Личный кабинет
-        </NavLink>
+        {!isJudge && (
+          <NavLink
+            to="/cabinet"
+            className={({ isActive }) =>
+              `nav-link nav-link-cabinet ${isActive ? 'active' : ''}`
+            }
+          >
+            Личный кабинет
+          </NavLink>
+        )}
       </nav>
 
       <div className="sidebar-foot">Страйкбольная команда</div>

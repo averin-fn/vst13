@@ -13,9 +13,15 @@ const links = [
 export default function Cabinet() {
   const navigate = useNavigate();
   const [me, setMe] = useState(null);
+  const [meLoaded, setMeLoaded] = useState(false);
   const [unread, setUnread] = useState(0);
 
-  const refreshMe = () => api.getMe().then(setMe).catch(() => {});
+  const refreshMe = () =>
+    api
+      .getMe()
+      .then(setMe)
+      .catch(() => {})
+      .finally(() => setMeLoaded(true));
   const refreshUnread = () =>
     api
       .getUnreadChat()
@@ -33,6 +39,12 @@ export default function Cabinet() {
 
   if (!isMemberAuthed()) {
     return <Navigate to="/cabinet/login" replace />;
+  }
+
+  // До загрузки профиля кабинет не рисуем: иначе судья на мгновение видит
+  // меню с «Мероприятиями» и «Чатом» до срабатывания редиректа ниже.
+  if (!meLoaded) {
+    return <p className="notice">Загрузка…</p>;
   }
 
   // Аккаунт судьи Breakout of Zelenyi: кабинет закрыт, его место — вкладка игры
